@@ -310,6 +310,7 @@ export default function CocoProno() {
   const [filterG, setFilterG] = useState("all");
   const [filterMD, setFilterMD] = useState("all");
   const [filterPhase, setFilterPhase] = useState("groupes"); // "groupes" | "finale"
+  const [bracketView, setBracketView] = useState(false);
   const [koTeams, setKoTeams] = useState({}); // { matchId: { team1, team2 } } — noms édités par admin
   const [inlineInputs, setInlineInputs] = useState({});  // { matchId: { s1, s2 } }
   const [editReal, setEditReal] = useState(null);
@@ -964,24 +965,165 @@ export default function CocoProno() {
             </>;
           }
 
-          // Phase finale — regroupée par tour
-          const rounds = [...new Set(ALL_KO_MATCHES.map(m => m.round))];
-          return rounds.map(round => {
-            const matches = ALL_KO_MATCHES.filter(m => m.round === round);
-            const rc = roundColors[round] || { bg:"rgba(30,45,66,0.9)", color:"#e2e8f0" };
-            return (
-              <div key={round} style={{ marginBottom:24 }}>
-                <div style={{ display:"flex", alignItems:"center", gap:10, marginBottom:12 }}>
-                  <div style={{ flex:1, height:1, background:"rgba(255,255,255,0.15)" }} />
-                  <div style={{ padding:"6px 18px", borderRadius:20, background:rc.bg, color:rc.color, fontSize:13, fontWeight:800, border:`1px solid ${rc.color}55`, letterSpacing:0.5 }}>
-                    {round === "Finale" ? "🏆 " : round === "Demi-finales" ? "⚡ " : round === "Quarts" ? "🎯 " : round === "Huitièmes" ? "⚽ " : "🥉 "}{round}
-                  </div>
-                  <div style={{ flex:1, height:1, background:"rgba(255,255,255,0.15)" }} />
-                </div>
-                {matches.map(m => renderMatch(m))}
+          // ── Phase finale ────────────────────────────────
+          const CH=54, CW=130, GAP=7, PH=2*CH+GAP; // 115px pair height
+          const CONN=18, LC="rgba(21,128,61,0.55)";
+
+          // Compact bracket card
+          const bc = (id) => {
+            const m = ALL_KO_MATCHES.find(x => x.id === id);
+            if (!m) return <div key={id} style={{width:CW,height:CH,borderRadius:8,background:"rgba(255,255,255,0.2)",border:"1.5px dashed rgba(21,128,61,0.2)",flexShrink:0}} />;
+            const t1s = koTeams[m.id]?.team1||m.team1, t2s = koTeams[m.id]?.team2||m.team2;
+            const t1=splitTeam(t1s), t2=splitTeam(t2s);
+            const real=realScores[m.id], pred=preds[me?`${me.id}_${m.id}`:null];
+            const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
+            const locked=isMatchLocked(m), known=Boolean(koTeams[m.id]?.team1||!t1s.startsWith("🏳"));
+            const row=(t,sc,pr)=>(
+              <div style={{display:"flex",alignItems:"center",gap:3,padding:"3px 5px"}}>
+                <span style={{fontSize:12,fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif",flexShrink:0}}>{t.emoji}</span>
+                <span style={{fontSize:9,fontWeight:700,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:known?TEXT:"#bbb"}}>{t.name.length>11?t.name.slice(0,10)+"…":t.name}</span>
+                <span style={{fontSize:11,fontWeight:900,color:real!==undefined?G:"#ccc",minWidth:10,textAlign:"right",flexShrink:0}}>{real!==undefined?sc:pr!==undefined?pr:"–"}</span>
               </div>
             );
-          });
+            return (
+              <div key={id} style={{width:CW,borderRadius:8,overflow:"hidden",flexShrink:0,
+                background:meta?"rgba(255,255,255,0.96)":"rgba(255,255,255,0.88)",
+                border:`1.5px solid ${meta?meta.hex:locked?"rgba(180,180,180,0.4)":known?"rgba(21,128,61,0.35)":"rgba(150,150,150,0.2)"}`,
+                boxShadow:"0 2px 8px rgba(0,0,0,0.12)"}}>
+                <div style={{fontSize:8,fontWeight:800,textAlign:"center",padding:"2px",borderBottom:"1px solid rgba(0,0,0,0.06)",background:meta?`${meta.hex}22`:"rgba(0,0,0,0.03)",color:meta?meta.hex:MUTED}}>
+                  {m.roundShort}{locked?" 🔒":m.time?" ⏱"+m.time:""}
+                </div>
+                {row(t1,real?.s1,pred?.s1)}
+                <div style={{height:1,background:"rgba(0,0,0,0.06)",margin:"0 4px"}}/>
+                {row(t2,real?.s2,pred?.s2)}
+                {meta&&<div style={{textAlign:"center",fontSize:8,color:meta.hex,fontWeight:800,padding:"1px",borderTop:"1px solid rgba(0,0,0,0.05)"}}>{meta.icon}+{pts}pt</div>}
+              </div>
+            );
+          };
+
+          // Build bracket half: 4 R16 pairs → 4 QF → 2 SF
+          const buildHalf = (r16pairs, qfIds, sfIds) => {
+            const W=4*CW+3*CONN, H=4*PH;
+            const cards=[], paths=[];
+            r16pairs.forEach(([a,b],i) => {
+              const yA=i*PH, yB=i*PH+PH-CH;
+              cards.push({id:a,x:0,y:yA}); cards.push({id:b,x:0,y:yB});
+              const cA=yA+CH/2, cB=yB+CH/2, mid=i*PH+PH/2;
+              const x0=CW, x1=CW+CONN;
+              paths.push(`M${x0},${cA}H${x1}V${mid}`);
+              paths.push(`M${x0},${cB}H${x1}V${mid}`);
+            });
+            qfIds.forEach((id,i) => {
+              const qfX=CW+CONN, qfY=i*PH+PH/2-CH/2;
+              cards.push({id,x:qfX,y:qfY});
+              if (i%2===0) {
+                const cA=i*PH+PH/2, cB=(i+1)*PH+PH/2, sfMid=i*PH+PH;
+                const x0=qfX+CW, x1=qfX+CW+CONN;
+                paths.push(`M${x0},${cA}H${x1}V${sfMid}`);
+                paths.push(`M${x0},${cB}H${x1}V${sfMid}`);
+              }
+            });
+            sfIds.forEach((id,i) => {
+              const sfX=CW+CONN+CW+CONN, sfY=i*2*PH+PH-CH/2;
+              cards.push({id,x:sfX,y:sfY});
+            });
+            return (
+              <div style={{overflowX:"auto",paddingBottom:4}}>
+                <div style={{position:"relative",width:W,height:H}}>
+                  <svg style={{position:"absolute",inset:0,width:W,height:H,pointerEvents:"none",overflow:"visible"}}>
+                    {paths.map((d,i)=><path key={i} d={d} fill="none" stroke={LC} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>)}
+                  </svg>
+                  {cards.map(({id,x,y})=>(
+                    <div key={id} style={{position:"absolute",left:x,top:y}}>{bc(id)}</div>
+                  ))}
+                </div>
+              </div>
+            );
+          };
+
+          // Finale card
+          const finaleCard = () => {
+            const m=ALL_KO_MATCHES.find(x=>x.id===1401);
+            const t1s=koTeams[1401]?.team1||m.team1, t2s=koTeams[1401]?.team2||m.team2;
+            const t1=splitTeam(t1s), t2=splitTeam(t2s);
+            const real=realScores[1401], pred=preds[me?`${me.id}_1401`:null];
+            const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
+            return (
+              <div style={{...card,padding:"16px",margin:"20px 0",background:"linear-gradient(135deg,rgba(251,191,36,0.22),rgba(245,158,11,0.12))",border:`2px solid ${meta?meta.hex:"rgba(251,191,36,0.55)"}`,boxShadow:"0 4px 20px rgba(251,191,36,0.2)"}}>
+                <div style={{textAlign:"center",marginBottom:12}}>
+                  <span style={{fontSize:11,fontWeight:800,color:"#b45309",background:"rgba(180,83,9,0.12)",padding:"3px 14px",borderRadius:20,letterSpacing:1}}>🏆 FINALE — 19/07/2026</span>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,alignItems:"center"}}>
+                  <div style={{textAlign:"center"}}>
+                    <span style={{fontSize:32,display:"block",fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif"}}>{t1.emoji}</span>
+                    <div style={{fontSize:12,fontWeight:800,color:TEXT,marginTop:4}}>{t1.name}</div>
+                  </div>
+                  <div style={{textAlign:"center"}}>
+                    {real?<div style={{fontSize:26,fontWeight:900,color:G,letterSpacing:4}}>{real.s1} – {real.s2}</div>
+                         :<div style={{fontSize:14,fontWeight:800,color:"rgba(21,128,61,0.35)",letterSpacing:4}}>VS</div>}
+                    {pred&&<div style={{fontSize:11,color:MUTED,marginTop:3}}>Prono : {pred.s1}-{pred.s2} {meta?meta.icon:""}</div>}
+                    {meta&&<div style={{fontSize:11,fontWeight:800,color:meta.hex}}>{meta.icon} +{pts}pts</div>}
+                  </div>
+                  <div style={{textAlign:"center"}}>
+                    <span style={{fontSize:32,display:"block",fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif"}}>{t2.emoji}</span>
+                    <div style={{fontSize:12,fontWeight:800,color:TEXT,marginTop:4}}>{t2.name}</div>
+                  </div>
+                </div>
+              </div>
+            );
+          };
+
+          const label = (txt) => (
+            <div style={{fontSize:10,fontWeight:700,color:"rgba(255,255,255,0.5)",textTransform:"uppercase",letterSpacing:1.5,marginBottom:8,paddingLeft:2}}>{txt}</div>
+          );
+
+          return (
+            <>
+              {/* Toggle liste / bracket */}
+              <div style={{display:"flex",gap:8,marginBottom:16}}>
+                <button onClick={()=>setBracketView(false)} style={{...navBtnS(!bracketView),flex:1,fontSize:12,background:!bracketView?"#15803d":"rgba(255,255,255,0.7)",color:!bracketView?"#fff":TEXT}}>📋 Liste</button>
+                <button onClick={()=>setBracketView(true)}  style={{...navBtnS(bracketView), flex:1,fontSize:12,background:bracketView?"#15803d":"rgba(255,255,255,0.7)",color:bracketView?"#fff":TEXT}}>🌳 Arbre</button>
+              </div>
+
+              {bracketView ? (
+                /* ── VUE BRACKET ── */
+                <div>
+                  {label("Tableau A — Huitièmes H1→H8")}
+                  {buildHalf([[1001,1002],[1003,1004],[1005,1006],[1007,1008]],[1101,1102,1103,1104],[1201,1202])}
+                  {finaleCard()}
+                  {label("Tableau B — Huitièmes H9→H16")}
+                  {buildHalf([[1009,1010],[1011,1012],[1013,1014],[1015,1016]],[1105,1106,1107,1108],[1203,1204])}
+                  {/* Petites finales */}
+                  <div style={{...card,padding:"12px 14px",marginTop:16}}>
+                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>🥉 Petites finales</div>
+                    <div style={{display:"flex",gap:8,overflowX:"auto"}}>
+                      {[1301,1302].map(id=><div key={id} style={{flexShrink:0}}>{bc(id)}</div>)}
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* ── VUE LISTE ── */
+                <div>
+                  {[...new Set(ALL_KO_MATCHES.map(m=>m.round))].map(round => {
+                    const matches=ALL_KO_MATCHES.filter(m=>m.round===round);
+                    const rc=roundColors[round]||{bg:"rgba(30,45,66,0.9)",color:"#e2e8f0"};
+                    return (
+                      <div key={round} style={{marginBottom:24}}>
+                        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
+                          <div style={{padding:"6px 18px",borderRadius:20,background:rc.bg,color:rc.color,fontSize:13,fontWeight:800,border:`1px solid ${rc.color}55`,letterSpacing:0.5}}>
+                            {round==="Finale"?"🏆 ":round==="Demi-finales"?"⚡ ":round==="Quarts"?"🎯 ":round==="Huitièmes"?"⚽ ":"🥉 "}{round}
+                          </div>
+                          <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
+                        </div>
+                        {matches.map(m=>renderMatch(m))}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          );
         })()}
       </div>
     </>
