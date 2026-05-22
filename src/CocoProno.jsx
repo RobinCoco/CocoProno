@@ -46,6 +46,19 @@ const MD_DATES = {
   3: { A:"26/06",B:"26/06",C:"27/06",D:"27/06",E:"28/06",F:"28/06",G:"29/06",H:"29/06",I:"30/06",J:"30/06",K:"02/07",L:"02/07" },
 };
 
+// Horaires des matchs (heure locale CET — à confirmer avec le calendrier officiel FIFA)
+// J1 & J2 : 1er match 21h00, 2e match 00h00 | J3 : matchs simultanés à 21h00
+const MD_TIMES = {
+  1: { A:"21:00",B:"21:00",C:"00:00",D:"21:00",E:"00:00",F:"21:00",G:"00:00",H:"21:00",I:"00:00",J:"00:00",K:"00:00",L:"00:00" },
+  2: { A:"00:00",B:"21:00",C:"21:00",D:"00:00",E:"21:00",F:"00:00",G:"21:00",H:"00:00",I:"21:00",J:"21:00",K:"00:00",L:"21:00" },
+  3: { A:"21:00",B:"21:00",C:"21:00",D:"21:00",E:"21:00",F:"21:00",G:"21:00",H:"21:00",I:"21:00",J:"21:00",K:"21:00",L:"21:00" },
+};
+const MD_TIMES2 = {
+  1: { A:"00:00",B:"00:00",C:"03:00",D:"00:00",E:"03:00",F:"00:00",G:"03:00",H:"00:00",I:"03:00",J:"03:00",K:"03:00",L:"03:00" },
+  2: { A:"03:00",B:"00:00",C:"00:00",D:"03:00",E:"00:00",F:"03:00",G:"00:00",H:"03:00",I:"00:00",J:"00:00",K:"03:00",L:"00:00" },
+  3: { A:"21:00",B:"21:00",C:"21:00",D:"21:00",E:"21:00",F:"21:00",G:"21:00",H:"21:00",I:"21:00",J:"21:00",K:"21:00",L:"21:00" },
+};
+
 function generateMatches() {
   const matches = [];
   let id = 1;
@@ -55,8 +68,9 @@ function generateMatches() {
       { md:2, pairs:[[0,2],[1,3]] },
       { md:3, pairs:[[0,3],[1,2]] },
     ].forEach(({ md, pairs }) => {
-      pairs.forEach(([i, j]) => {
-        matches.push({ id: id++, group: `Groupe ${g}`, gKey: g, md, team1: teams[i], team2: teams[j], date: MD_DATES[md][g] });
+      pairs.forEach(([i, j], pairIdx) => {
+        const time = pairIdx === 0 ? MD_TIMES[md][g] : (md === 3 ? MD_TIMES[md][g] : MD_TIMES2[md][g]);
+        matches.push({ id: id++, group: `Groupe ${g}`, gKey: g, md, team1: teams[i], team2: teams[j], date: MD_DATES[md][g], time });
       });
     });
   });
@@ -69,41 +83,41 @@ const ALL_MATCHES = generateMatches();
 // IDs 1001+ pour éviter les collisions avec les matchs de groupes
 const KNOCKOUT_MATCHES = [
   // Huitièmes de finale (16 matchs)
-  { id:1001, round:"Huitièmes", roundShort:"H1",  slot:"H1",  team1:"🏳️ 1er A",   team2:"🏳️ 2e B",    date:"04/07" },
-  { id:1002, round:"Huitièmes", roundShort:"H2",  slot:"H2",  team1:"🏳️ 1er C",   team2:"🏳️ 2e D",    date:"04/07" },
-  { id:1003, round:"Huitièmes", roundShort:"H3",  slot:"H3",  team1:"🏳️ 1er E",   team2:"🏳️ 2e F",    date:"05/07" },
-  { id:1004, round:"Huitièmes", roundShort:"H4",  slot:"H4",  team1:"🏳️ 1er G",   team2:"🏳️ 2e H",    date:"05/07" },
-  { id:1005, round:"Huitièmes", roundShort:"H5",  slot:"H5",  team1:"🏳️ 1er I",   team2:"🏳️ 2e J",    date:"06/07" },
-  { id:1006, round:"Huitièmes", roundShort:"H6",  slot:"H6",  team1:"🏳️ 1er K",   team2:"🏳️ 2e L",    date:"06/07" },
-  { id:1007, round:"Huitièmes", roundShort:"H7",  slot:"H7",  team1:"🏳️ 2e A",    team2:"🏳️ 1er B",   date:"07/07" },
-  { id:1008, round:"Huitièmes", roundShort:"H8",  slot:"H8",  team1:"🏳️ 2e C",    team2:"🏳️ 1er D",   date:"07/07" },
-  { id:1009, round:"Huitièmes", roundShort:"H9",  slot:"H9",  team1:"🏳️ 2e E",    team2:"🏳️ 1er F",   date:"08/07" },
-  { id:1010, round:"Huitièmes", roundShort:"H10", slot:"H10", team1:"🏳️ 2e G",    team2:"🏳️ 1er H",   date:"08/07" },
-  { id:1011, round:"Huitièmes", roundShort:"H11", slot:"H11", team1:"🏳️ 2e I",    team2:"🏳️ 1er J",   date:"09/07" },
-  { id:1012, round:"Huitièmes", roundShort:"H12", slot:"H12", team1:"🏳️ 2e K",    team2:"🏳️ 1er L",   date:"09/07" },
-  { id:1013, round:"Huitièmes", roundShort:"H13", slot:"H13", team1:"🏳️ 3e (1)",  team2:"🏳️ 3e (2)",  date:"10/07" },
-  { id:1014, round:"Huitièmes", roundShort:"H14", slot:"H14", team1:"🏳️ 3e (3)",  team2:"🏳️ 3e (4)",  date:"10/07" },
-  { id:1015, round:"Huitièmes", roundShort:"H15", slot:"H15", team1:"🏳️ 3e (5)",  team2:"🏳️ 3e (6)",  date:"11/07" },
-  { id:1016, round:"Huitièmes", roundShort:"H16", slot:"H16", team1:"🏳️ 3e (7)",  team2:"🏳️ 3e (8)",  date:"11/07" },
-  // Quarts de finale (8 matchs)
-  { id:1101, round:"Quarts",    roundShort:"QF1", slot:"QF1", team1:"🏳️ Vainq. H1",  team2:"🏳️ Vainq. H2",  date:"14/07" },
-  { id:1102, round:"Quarts",    roundShort:"QF2", slot:"QF2", team1:"🏳️ Vainq. H3",  team2:"🏳️ Vainq. H4",  date:"14/07" },
-  { id:1103, round:"Quarts",    roundShort:"QF3", slot:"QF3", team1:"🏳️ Vainq. H5",  team2:"🏳️ Vainq. H6",  date:"15/07" },
-  { id:1104, round:"Quarts",    roundShort:"QF4", slot:"QF4", team1:"🏳️ Vainq. H7",  team2:"🏳️ Vainq. H8",  date:"15/07" },
-  { id:1105, round:"Quarts",    roundShort:"QF5", slot:"QF5", team1:"🏳️ Vainq. H9",  team2:"🏳️ Vainq. H10", date:"16/07" },
-  { id:1106, round:"Quarts",    roundShort:"QF6", slot:"QF6", team1:"🏳️ Vainq. H11", team2:"🏳️ Vainq. H12", date:"16/07" },
-  { id:1107, round:"Quarts",    roundShort:"QF7", slot:"QF7", team1:"🏳️ Vainq. H13", team2:"🏳️ Vainq. H14", date:"17/07" },
-  { id:1108, round:"Quarts",    roundShort:"QF8", slot:"QF8", team1:"🏳️ Vainq. H15", team2:"🏳️ Vainq. H16", date:"17/07" },
-  // Demi-finales (4 matchs)
-  { id:1201, round:"Demi-finales", roundShort:"SF1", slot:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"22/07" },
-  { id:1202, round:"Demi-finales", roundShort:"SF2", slot:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"22/07" },
-  { id:1203, round:"Demi-finales", roundShort:"SF3", slot:"SF3", team1:"🏳️ Vainq. QF5", team2:"🏳️ Vainq. QF6", date:"23/07" },
-  { id:1204, round:"Demi-finales", roundShort:"SF4", slot:"SF4", team1:"🏳️ Vainq. QF7", team2:"🏳️ Vainq. QF8", date:"23/07" },
+  { id:1001, round:"Huitièmes", roundShort:"H1",  team1:"🏳️ 1er A",   team2:"🏳️ 2e B",    date:"04/07", time:"21:00" },
+  { id:1002, round:"Huitièmes", roundShort:"H2",  team1:"🏳️ 1er C",   team2:"🏳️ 2e D",    date:"04/07", time:"00:00" },
+  { id:1003, round:"Huitièmes", roundShort:"H3",  team1:"🏳️ 1er E",   team2:"🏳️ 2e F",    date:"05/07", time:"21:00" },
+  { id:1004, round:"Huitièmes", roundShort:"H4",  team1:"🏳️ 1er G",   team2:"🏳️ 2e H",    date:"05/07", time:"00:00" },
+  { id:1005, round:"Huitièmes", roundShort:"H5",  team1:"🏳️ 1er I",   team2:"🏳️ 2e J",    date:"06/07", time:"21:00" },
+  { id:1006, round:"Huitièmes", roundShort:"H6",  team1:"🏳️ 1er K",   team2:"🏳️ 2e L",    date:"06/07", time:"00:00" },
+  { id:1007, round:"Huitièmes", roundShort:"H7",  team1:"🏳️ 2e A",    team2:"🏳️ 1er B",   date:"07/07", time:"21:00" },
+  { id:1008, round:"Huitièmes", roundShort:"H8",  team1:"🏳️ 2e C",    team2:"🏳️ 1er D",   date:"07/07", time:"00:00" },
+  { id:1009, round:"Huitièmes", roundShort:"H9",  team1:"🏳️ 2e E",    team2:"🏳️ 1er F",   date:"08/07", time:"21:00" },
+  { id:1010, round:"Huitièmes", roundShort:"H10", team1:"🏳️ 2e G",    team2:"🏳️ 1er H",   date:"08/07", time:"00:00" },
+  { id:1011, round:"Huitièmes", roundShort:"H11", team1:"🏳️ 2e I",    team2:"🏳️ 1er J",   date:"09/07", time:"21:00" },
+  { id:1012, round:"Huitièmes", roundShort:"H12", team1:"🏳️ 2e K",    team2:"🏳️ 1er L",   date:"09/07", time:"00:00" },
+  { id:1013, round:"Huitièmes", roundShort:"H13", team1:"🏳️ 3e (1)",  team2:"🏳️ 3e (2)",  date:"10/07", time:"21:00" },
+  { id:1014, round:"Huitièmes", roundShort:"H14", team1:"🏳️ 3e (3)",  team2:"🏳️ 3e (4)",  date:"10/07", time:"00:00" },
+  { id:1015, round:"Huitièmes", roundShort:"H15", team1:"🏳️ 3e (5)",  team2:"🏳️ 3e (6)",  date:"11/07", time:"21:00" },
+  { id:1016, round:"Huitièmes", roundShort:"H16", team1:"🏳️ 3e (7)",  team2:"🏳️ 3e (8)",  date:"11/07", time:"00:00" },
+  // Quarts de finale
+  { id:1101, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H1",  team2:"🏳️ Vainq. H2",  date:"14/07", time:"21:00" },
+  { id:1102, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H3",  team2:"🏳️ Vainq. H4",  date:"14/07", time:"00:00" },
+  { id:1103, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H5",  team2:"🏳️ Vainq. H6",  date:"15/07", time:"21:00" },
+  { id:1104, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7",  team2:"🏳️ Vainq. H8",  date:"15/07", time:"00:00" },
+  { id:1105, round:"Quarts", roundShort:"QF5", team1:"🏳️ Vainq. H9",  team2:"🏳️ Vainq. H10", date:"16/07", time:"21:00" },
+  { id:1106, round:"Quarts", roundShort:"QF6", team1:"🏳️ Vainq. H11", team2:"🏳️ Vainq. H12", date:"16/07", time:"00:00" },
+  { id:1107, round:"Quarts", roundShort:"QF7", team1:"🏳️ Vainq. H13", team2:"🏳️ Vainq. H14", date:"17/07", time:"21:00" },
+  { id:1108, round:"Quarts", roundShort:"QF8", team1:"🏳️ Vainq. H15", team2:"🏳️ Vainq. H16", date:"17/07", time:"00:00" },
+  // Demi-finales
+  { id:1201, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"22/07", time:"21:00" },
+  { id:1202, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"22/07", time:"00:00" },
+  { id:1203, round:"Demi-finales", roundShort:"SF3", team1:"🏳️ Vainq. QF5", team2:"🏳️ Vainq. QF6", date:"23/07", time:"21:00" },
+  { id:1204, round:"Demi-finales", roundShort:"SF4", team1:"🏳️ Vainq. QF7", team2:"🏳️ Vainq. QF8", date:"23/07", time:"00:00" },
   // Petite finale
-  { id:1301, round:"Petite finale", roundShort:"3P", slot:"3P", team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"19/07" },
-  { id:1302, round:"Petite finale", roundShort:"3P", slot:"3P2", team1:"🏳️ Perdant SF3", team2:"🏳️ Perdant SF4", date:"19/07" },
+  { id:1301, round:"Petite finale", roundShort:"3P",  team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"19/07", time:"21:00" },
+  { id:1302, round:"Petite finale", roundShort:"3P2", team1:"🏳️ Perdant SF3", team2:"🏳️ Perdant SF4", date:"19/07", time:"00:00" },
   // Finale
-  { id:1401, round:"Finale",    roundShort:"🏆",  slot:"FIN", team1:"🏳️ Vainq. SF1+SF2", team2:"🏳️ Vainq. SF3+SF4", date:"19/07" },
+  { id:1401, round:"Finale", roundShort:"🏆", team1:"🏳️ Vainq. SF1+SF2", team2:"🏳️ Vainq. SF3+SF4", date:"19/07", time:"21:00" },
 ];
 
 const ALL_KO_MATCHES = KNOCKOUT_MATCHES;
@@ -299,6 +313,24 @@ export default function CocoProno() {
   const [koTeams, setKoTeams] = useState({}); // { matchId: { team1, team2 } } — noms édités par admin
   const [inlineInputs, setInlineInputs] = useState({});  // { matchId: { s1, s2 } }
   const [editReal, setEditReal] = useState(null);
+  const [now, setNow] = useState(new Date());
+
+  // Mise à jour toutes les minutes pour activer le verrouillage en temps réel
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  // Vérifier si un match est verrouillé (commencé)
+  const isMatchLocked = (m) => {
+    if (!m.date || !m.time) return false;
+    const [d, mo] = m.date.split("/").map(Number);
+    const [h, mi] = m.time.split(":").map(Number);
+    // Gestion minuit : si heure = 00:xx ou 03:xx, c'est le lendemain matin
+    const dayOffset = h < 6 ? 1 : 0;
+    const start = new Date(2026, mo - 1, d + dayOffset, h, mi);
+    return now >= start;
+  };
   const [rInput, setRInput] = useState({ s1:0, s2:0 });
   const [adminPin, setAdminPin] = useState("");
   const [adminOk, setAdminOk] = useState(false);
@@ -828,36 +860,68 @@ export default function CocoProno() {
             const v2 = local.s2 !== undefined ? local.s2 : (pred !== undefined ? String(pred.s2) : "");
             const previewPts  = (v1!==""&&v2!==""&&real) ? calcPts({s1:parseInt(v1),s2:parseInt(v2)},real) : null;
             const previewMeta = previewPts !== null ? ptsMeta(previewPts) : meta;
+            const locked = isMatchLocked(m);
+
+            const iStyle = {
+              width:52, height:52, borderRadius:12,
+              border:`2.5px solid ${locked ? "rgba(150,150,150,0.3)" : G}`,
+              background: locked ? "rgba(200,200,200,0.2)" : "rgba(21,128,61,0.07)",
+              textAlign:"center", fontSize:26, fontWeight:900,
+              color: locked ? "#999" : G, outline:"none", MozAppearance:"textfield",
+              cursor: locked ? "not-allowed" : "text",
+            };
+
+            const FlagBox = ({t}) => (
+              <div style={{ width:72, height:52, borderRadius:8, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(0,0,0,0.08)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", overflow:"hidden", flexShrink:0 }}>
+                {t.imgUrl
+                  ? <img src={t.imgUrl} alt={t.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+                  : <span style={{ fontSize:44, lineHeight:1, fontFamily:"'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif" }}>{t.emoji}</span>
+                }
+              </div>
+            );
+
+            const ScoreBox = ({v, onCh, onBl, otherV}) => locked
+              ? <div style={{ width:52, height:52, borderRadius:12, background:"rgba(200,200,200,0.2)", border:"2px solid rgba(150,150,150,0.2)", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <span style={{ fontSize:22, fontWeight:900, color:"#999" }}>{v !== "" ? v : "–"}</span>
+                </div>
+              : <input type="number" min="0" max="99" value={v} placeholder="–" style={iStyle}
+                  onClick={e=>e.stopPropagation()} onChange={onCh} onBlur={onBl} onFocus={e=>e.target.select()} />;
+
             return (
-              <div key={m.id} style={{ ...card, marginBottom:10, background:previewMeta?`rgba(255,255,255,${previewMeta.color==="red"?0.82:0.88})`:"rgba(255,255,255,0.88)", borderLeft:previewMeta?`4px solid ${previewMeta.hex}`:"4px solid rgba(21,128,61,0.15)", padding:"14px 16px" }}>
+              <div key={m.id} style={{
+                ...card, marginBottom:10, padding:"14px 16px",
+                background: locked ? "rgba(235,235,235,0.82)" : previewMeta ? `rgba(255,255,255,${previewMeta.color==="red"?0.82:0.88})` : "rgba(255,255,255,0.88)",
+                borderLeft: locked ? "4px solid #bbb" : previewMeta ? `4px solid ${previewMeta.hex}` : "4px solid rgba(21,128,61,0.15)",
+                opacity: locked ? 0.88 : 1,
+              }}>
+                {/* Header */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-                  <div style={{ display:"flex", gap:6 }}>
+                  <div style={{ display:"flex", gap:6, alignItems:"center", flexWrap:"wrap" }}>
                     {m.group && <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(21,128,61,0.12)", color:G }}>{m.group}</span>}
                     {m.roundShort && <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(180,83,9,0.1)", color:GOLD }}>{m.roundShort}</span>}
                     {m.md && <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(180,83,9,0.1)", color:GOLD }}>J{m.md}</span>}
+                    {locked
+                      ? <span style={{ fontSize:11, fontWeight:700, color:"#888", display:"flex", alignItems:"center", gap:3 }}>🔒 Clôturé</span>
+                      : m.time && <span style={{ fontSize:11, fontWeight:700, color:G, background:"rgba(21,128,61,0.08)", padding:"2px 8px", borderRadius:6 }}>⏱ {m.time}</span>
+                    }
                   </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    {previewMeta && <span style={{ ...pill(previewMeta), fontSize:11 }}>{previewMeta.icon} +{previewPts??pts}pt{(previewPts??pts)>1?"s":""}</span>}
-                    <span style={{ fontSize:12, color:MUTED }}>{m.date}/2026</span>
+                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                    {!locked && previewMeta && <span style={{ ...pill(previewMeta), fontSize:11 }}>{previewMeta.icon} +{previewPts??pts}pt{(previewPts??pts)>1?"s":""}</span>}
+                    {locked && meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
+                    <span style={{ fontSize:11, color:MUTED }}>{m.date}/2026</span>
                   </div>
                 </div>
+
+                {/* Teams */}
                 <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap:8 }}>
-                  {/* Équipe 1 */}
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                    <div style={{ width:72, height:52, borderRadius:8, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(0,0,0,0.08)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", overflow:"hidden", flexShrink:0 }}>
-                      {t1.imgUrl
-                        ? <img src={t1.imgUrl} alt={t1.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                        : <span style={{ fontSize:44, lineHeight:1, fontFamily:"'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif" }}>{t1.emoji}</span>
-                      }
-                    </div>
-                    <div style={{ fontWeight:800, fontSize:12, color:TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t1.name}</div>
-                    <input type="number" min="0" max="99" value={v1} placeholder="–" style={inputStyle}
-                      onClick={e=>e.stopPropagation()}
-                      onChange={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s1:e.target.value}}))}
-                      onBlur={e=>{const s2=inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):"");saveInlinePred(m.id,e.target.value,s2);}}
-                      onFocus={e=>e.target.select()} />
+                    <FlagBox t={t1} />
+                    <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t1.name}</div>
+                    <ScoreBox v={v1}
+                      onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s1:e.target.value}}))}
+                      onBl={e=>{const s2=inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):"");saveInlinePred(m.id,e.target.value,s2);}}
+                      otherV={v2} />
                   </div>
-                  {/* Centre */}
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, minWidth:60 }}>
                     {real ? (
                       <div style={{ display:"flex", alignItems:"center", gap:4 }}>
@@ -866,24 +930,19 @@ export default function CocoProno() {
                         <div style={{ ...scoreBox, width:32, height:32, fontSize:18, background:"rgba(21,128,61,0.08)", color:G }}>{real.s2}</div>
                       </div>
                     ) : <div style={{ fontSize:11, fontWeight:800, color:"rgba(21,128,61,0.3)", letterSpacing:2 }}>VS</div>}
-                    <div style={{ fontSize:10, color:MUTED, textAlign:"center" }}>{v1!==""&&v2!==""?"mon prono":"ton prono"}</div>
+                    <div style={{ fontSize:10, color:MUTED, textAlign:"center" }}>{locked?"🔒 fermé":v1!==""&&v2!==""?"mon prono":"ton prono"}</div>
                   </div>
-                  {/* Équipe 2 */}
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                    <div style={{ width:72, height:52, borderRadius:8, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(0,0,0,0.08)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", overflow:"hidden", flexShrink:0 }}>
-                      {t2.imgUrl
-                        ? <img src={t2.imgUrl} alt={t2.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                        : <span style={{ fontSize:44, lineHeight:1, fontFamily:"'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif" }}>{t2.emoji}</span>
-                      }
-                    </div>
-                    <div style={{ fontWeight:800, fontSize:12, color:TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t2.name}</div>
-                    <input type="number" min="0" max="99" value={v2} placeholder="–" style={inputStyle}
-                      onClick={e=>e.stopPropagation()}
-                      onChange={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s2:e.target.value}}))}
-                      onBlur={e=>{const s1=inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):"");saveInlinePred(m.id,s1,e.target.value);}}
-                      onFocus={e=>e.target.select()} />
+                    <FlagBox t={t2} />
+                    <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t2.name}</div>
+                    <ScoreBox v={v2}
+                      onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s2:e.target.value}}))}
+                      onBl={e=>{const s1=inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):"");saveInlinePred(m.id,s1,e.target.value);}}
+                      otherV={v1} />
                   </div>
                 </div>
+
+                {/* Prono IA */}
                 <div style={{ marginTop:10, paddingTop:10, borderTop:"1px dashed rgba(21,128,61,0.2)", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                     <div style={{ width:26, height:26, borderRadius:7, background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14 }}>🦜</div>
