@@ -1343,7 +1343,6 @@ export default function CocoProno() {
             {adminTab === "ia" && (() => {
               const iaKey = "cocoprono-ia";
 
-              // Créer le joueur IA si absent
               const ensureIaPlayer = async () => {
                 if (!players.find(p => p.id === iaKey)) {
                   const iaPlayer = { id: iaKey, name: "CocoProno IA", email: "ia@cocoprono.app", avatar: "🦜" };
@@ -1354,9 +1353,24 @@ export default function CocoProno() {
                 }
               };
 
-              // Sauvegarder un prono IA
+              // Réinitialiser TOUS les pronos IA
+              const resetIaPreds = async () => {
+                if (!window.confirm("Supprimer tous les pronostics de CocoProno IA ? Cette action est irréversible.")) return;
+                const next = { ...preds };
+                Object.keys(next).filter(k => k.startsWith(iaKey + "_")).forEach(k => delete next[k]);
+                setPreds(next);
+                if (storageMode.current === "supabase") {
+                  await fetch(`${SB_URL}/predictions?player_id=eq.${iaKey}`, {
+                    method: "DELETE",
+                    headers: sbH(),
+                  });
+                } else {
+                  await storageSave("cp_preds", next);
+                }
+              };
+
               const saveIaPred = async (matchId, s1, s2) => {
-                if (s1 === "" || s2 === "" ) return;
+                if (s1 === "" || s2 === "") return;
                 const s1n = parseInt(s1), s2n = parseInt(s2);
                 if (isNaN(s1n) || isNaN(s2n)) return;
                 await ensureIaPlayer();
@@ -1370,7 +1384,6 @@ export default function CocoProno() {
                 }
               };
 
-              // Connexion en tant que CocoProno IA
               const loginAsIa = async () => {
                 await ensureIaPlayer();
                 const iaPlayer = players.find(p => p.id === iaKey) || { id: iaKey, name: "CocoProno IA", email: "ia@cocoprono.app", avatar: "🦜" };
@@ -1393,13 +1406,22 @@ export default function CocoProno() {
                         <div style={{ fontWeight:900, fontSize:15, color:TEXT }}>CocoProno IA</div>
                         <div style={{ fontSize:12, color:MUTED }}>{existingCount}/72 pronostics saisis</div>
                       </div>
-                      <button style={{ ...btnS("primary"), padding:"8px 14px", fontSize:12, background:"linear-gradient(135deg,#fbbf24,#f59e0b)", color:"#0f2d12", fontWeight:900 }}
-                        onClick={loginAsIa}>
-                        🔑 Prendre le contrôle
-                      </button>
+                      <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
+                        <button style={{ ...btnS("primary"), padding:"8px 14px", fontSize:12, background:"linear-gradient(135deg,#fbbf24,#f59e0b)", color:"#0f2d12", fontWeight:900 }}
+                          onClick={loginAsIa}>
+                          🔑 Prendre le contrôle
+                        </button>
+                        {existingCount > 0 && (
+                          <button style={{ ...btnS("danger"), padding:"6px 14px", fontSize:11 }}
+                            onClick={resetIaPreds}>
+                            🗑 Réinitialiser tous les pronos
+                          </button>
+                        )}
+                      </div>
                     </div>
                     <div style={{ fontSize:12, color:MUTED, lineHeight:1.5, borderTop:"1px solid rgba(0,0,0,0.08)", paddingTop:10 }}>
-                      💡 "Prendre le contrôle" te connecte en tant que CocoProno IA — tu peux alors saisir ses pronostics directement depuis la page Matchs, comme n'importe quel joueur.
+                      💡 "Prendre le contrôle" te connecte en tant que CocoProno IA — saisis ses pronostics depuis la page Matchs comme n'importe quel joueur.<br/>
+                      Tu peux aussi les remplir directement dans le tableau ci-dessous.
                     </div>
                   </div>
 
@@ -1421,9 +1443,10 @@ export default function CocoProno() {
                     const real = realScores[m.id];
                     const pts = calcPts(pred, real);
                     const meta = pts !== null ? ptsMeta(pts) : null;
+                    const inputSt = (hasPred) => ({ width:50, height:50, borderRadius:12, border:`2.5px solid ${hasPred?"#fbbf24":"rgba(251,191,36,0.25)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" });
                     return (
                       <div key={m.id} style={{ ...card, padding:"12px 14px", marginBottom:8,
-                        borderLeft: meta ? `4px solid ${meta.hex}` : pred ? "4px solid #fbbf24" : "4px solid rgba(251,191,36,0.2)" }}>
+                        borderLeft: meta ? `4px solid ${meta.hex}` : pred ? "4px solid #fbbf24" : "4px solid rgba(251,191,36,0.15)" }}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                           <div style={{ display:"flex", gap:6 }}>
                             <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(21,128,61,0.12)", color:G }}>{m.group}</span>
@@ -1431,30 +1454,30 @@ export default function CocoProno() {
                           </div>
                           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                             {meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
-                            {real && <span style={{ fontSize:11, fontWeight:700, color:G }}>{real.s1}-{real.s2}</span>}
+                            {real && <span style={{ fontSize:11, fontWeight:700, color:G }}>Score : {real.s1}-{real.s2}</span>}
                           </div>
                         </div>
                         <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap:8 }}>
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                            <span style={{ fontSize:20 }}>{t1.emoji}</span>
+                            <span style={{ fontSize:22 }}>{t1.emoji}</span>
                             <span style={{ fontSize:11, fontWeight:700, color:TEXT, textAlign:"center" }}>{t1.name}</span>
                             <input type="number" min="0" max="99"
-                              defaultValue={pred?.s1 ?? ""}
+                              value={pred?.s1 ?? ""}
                               placeholder="–"
-                              onBlur={e => { const s2 = document.getElementById(`ia-s2-${m.id}`)?.value ?? ""; saveIaPred(m.id, e.target.value, s2); }}
-                              id={`ia-s1-${m.id}`}
-                              style={{ width:50, height:50, borderRadius:12, border:`2.5px solid ${pred?"#fbbf24":"rgba(251,191,36,0.3)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" }} />
+                              onChange={e => { const v=e.target.value; if(v===""||isNaN(parseInt(v))) return; saveIaPred(m.id, parseInt(v), pred?.s2 ?? 0); }}
+                              onFocus={e => e.target.select()}
+                              style={inputSt(!!pred)} />
                           </div>
                           <div style={{ textAlign:"center", fontSize:13, fontWeight:800, color:MUTED }}>–</div>
                           <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                            <span style={{ fontSize:20 }}>{t2.emoji}</span>
+                            <span style={{ fontSize:22 }}>{t2.emoji}</span>
                             <span style={{ fontSize:11, fontWeight:700, color:TEXT, textAlign:"center" }}>{t2.name}</span>
                             <input type="number" min="0" max="99"
-                              defaultValue={pred?.s2 ?? ""}
+                              value={pred?.s2 ?? ""}
                               placeholder="–"
-                              onBlur={e => { const s1 = document.getElementById(`ia-s1-${m.id}`)?.value ?? ""; saveIaPred(m.id, s1, e.target.value); }}
-                              id={`ia-s2-${m.id}`}
-                              style={{ width:50, height:50, borderRadius:12, border:`2.5px solid ${pred?"#fbbf24":"rgba(251,191,36,0.3)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" }} />
+                              onChange={e => { const v=e.target.value; if(v===""||isNaN(parseInt(v))) return; saveIaPred(m.id, pred?.s1 ?? 0, parseInt(v)); }}
+                              onFocus={e => e.target.select()}
+                              style={inputSt(!!pred)} />
                           </div>
                         </div>
                       </div>
