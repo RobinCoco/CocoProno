@@ -864,8 +864,8 @@ export default function CocoProno() {
             const real = realScores[m.id];
             const pts  = myPts(m);
             const meta = pts !== null ? ptsMeta(pts) : null;
-            // Prono IA : vrais pronos en priorité, fallback sur les factices
-            const aiPred = preds[`cocoprono-ia_${m.id}`] || AI_PREDS[m.id];
+            // Prono IA : uniquement le vrai compte cocoprono-ia
+            const aiPred = preds[`cocoprono-ia_${m.id}`] || null;
             const aiPts  = calcPts(aiPred, real);
             const aiMeta = aiPts !== null ? ptsMeta(aiPts) : null;
             const local  = inlineInputs[m.id] ?? {};
@@ -963,8 +963,12 @@ export default function CocoProno() {
                     <span style={{ fontSize:12, fontWeight:700, color:MUTED }}>Pronostic CocoProno</span>
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                    <span style={{ fontSize:22, fontWeight:900, color:"#b45309", letterSpacing:2 }}>{aiPred.s1} – {aiPred.s2}</span>
-                    {aiMeta && <span style={{ ...pill(aiMeta), fontSize:11, padding:"2px 8px" }}>{aiMeta.icon} +{aiPts}pt{aiPts>1?"s":""}</span>}
+                    {aiPred ? <>
+                      <span style={{ fontSize:22, fontWeight:900, color:"#b45309", letterSpacing:2 }}>{aiPred.s1} – {aiPred.s2}</span>
+                      {aiMeta && <span style={{ ...pill(aiMeta), fontSize:11, padding:"2px 8px" }}>{aiMeta.icon} +{aiPts}pt{aiPts>1?"s":""}</span>}
+                    </> : (
+                      <span style={{ fontSize:13, color:"rgba(180,83,9,0.4)", fontStyle:"italic" }}>À venir…</span>
+                    )}
                   </div>
                 </div>
               </div>
