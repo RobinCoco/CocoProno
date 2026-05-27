@@ -337,6 +337,7 @@ export default function CocoProno() {
   const [adminOk, setAdminOk] = useState(false);
   const [adminErr, setAdminErr] = useState(false);
   const [adminTab, setAdminTab] = useState("scores");
+  const [iaStatus, setIaStatus] = useState("idle"); // "idle"|"loading"|"done"|"error"
   const [parrotSrc, setParrotSrc] = useState(PARROT_IMG);
   const ADMIN_CODE = "coupe2026";
 
@@ -450,6 +451,17 @@ export default function CocoProno() {
   };
 
   const isValidEmail = (e) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
+
+  const handleEmailLogin = async () => {
+    const email = verifyEmail.trim().toLowerCase();
+    if (!isValidEmail(email)) { setVerifyError("Adresse email invalide."); return; }
+    const found = players.find(p => p.email?.toLowerCase() === email);
+    if (!found) { setVerifyError("Aucun compte trouvé avec cet email. Tu peux en créer un."); return; }
+    // Connexion directe — l'email suffit comme preuve d'identité
+    if (storageMode.current === "supabase") localStorage.setItem("cp_me", found.id);
+    else try { await window.storage.set("cp_me", found.id); } catch {}
+    setMe(found); setView("matches");
+  };
 
   const handleSignup = async () => {
     const name = signupName.trim();
@@ -673,32 +685,34 @@ export default function CocoProno() {
         {/* ── STEP: HOME ── */}
         {authStep === "home" && (
           <>
-            {players.length > 0 && (
-              <div style={{ marginBottom:20 }}>
-                <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:10 }}>Se connecter</div>
-                {players.map(p => {
-                  const lb = leaderboard.find(x => x.id === p.id);
-                  const rank = leaderboard.findIndex(x => x.id === p.id) + 1;
-                  return (
-                    <div key={p.id} onClick={() => { setVerifyPlayer(p); setVerifyEmail(""); setVerifyError(""); setAuthStep("verify"); }}
-                      style={{ ...card, display:"flex", alignItems:"center", gap:14, padding:"14px 18px", marginBottom:10, cursor:"pointer" }}>
-                      <div style={{ width:44, height:44, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:18, fontWeight:900, color:"#0f2d12", flexShrink:0 }}>{p.avatar}</div>
-                      <div style={{ flex:1 }}>
-                        <div style={{ fontWeight:800, fontSize:16, color: TEXT }}>{p.name}</div>
-                        <div style={{ fontSize:12, color: MUTED, marginTop:2 }}>
-                          {maskEmail(p.email)}{lb ? ` · #${rank} · ${lb.pts} pts` : ""}
-                        </div>
-                      </div>
-                      <div style={{ fontSize:20, color: G }}>→</div>
-                    </div>
-                  );
-                })}
+            {/* Connexion par email uniquement — sans afficher la liste des joueurs */}
+            <div style={{ ...card, padding:"22px 20px", marginBottom:16 }}>
+              <div style={{ fontSize:16, fontWeight:800, color: TEXT, marginBottom:4 }}>Se connecter</div>
+              <div style={{ fontSize:12, color: MUTED, marginBottom:16 }}>Entre ton adresse email pour accéder à ton compte.</div>
+              <div style={{ marginBottom:14 }}>
+                <label style={{ fontSize:11, fontWeight:700, color: MUTED, textTransform:"uppercase", letterSpacing:1.5, display:"block", marginBottom:6 }}>Email</label>
+                <input
+                  style={inputS} type="email" placeholder="ton@email.com"
+                  value={verifyEmail}
+                  onChange={e => { setVerifyEmail(e.target.value); setVerifyError(""); }}
+                  onKeyDown={e => { if (e.key === "Enter") handleEmailLogin(); }}
+                  autoFocus
+                />
+                {verifyError && (
+                  <div style={{ background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:10, padding:"10px 14px", fontSize:13, color:"#dc2626", fontWeight:600, marginTop:10 }}>
+                    {verifyError}
+                  </div>
+                )}
               </div>
-            )}
-            <div style={{ ...card, padding:"20px" }}>
+              <button style={{ ...btnS("primary"), width:"100%" }} onClick={handleEmailLogin}>
+                Accéder à mon compte →
+              </button>
+            </div>
+
+            <div style={{ ...card, padding:"16px 20px", marginBottom:20 }}>
               <div style={{ fontSize:13, fontWeight:700, color: TEXT, marginBottom:4 }}>Pas encore inscrit ?</div>
               <div style={{ fontSize:12, color: MUTED, marginBottom:14 }}>Crée ton profil pour participer.</div>
-              <button style={{ ...btnS("primary"), width:"100%" }} onClick={() => { setSignupName(""); setSignupEmail(""); setSignupError(""); setAuthStep("signup"); }}>
+              <button style={{ ...btnS("ghost"), width:"100%", border:"1px solid rgba(0,0,0,0.12)" }} onClick={() => { setSignupName(""); setSignupEmail(""); setSignupError(""); setAuthStep("signup"); }}>
                 Créer mon profil →
               </button>
             </div>
@@ -766,37 +780,6 @@ export default function CocoProno() {
             <div style={{ display:"flex", gap:10 }}>
               <button style={{ ...btnS("ghost"), flex:1, border:"1px solid rgba(0,0,0,0.15)" }} onClick={() => setAuthStep("home")}>Retour</button>
               <button style={{ ...btnS("primary"), flex:2 }} onClick={handleSignup}>Créer mon profil ⚽</button>
-            </div>
-          </div>
-        )}
-
-        {/* ── STEP: VERIFY (login) ── */}
-        {authStep === "verify" && verifyPlayer && (
-          <div style={{ ...card, padding:"24px" }}>
-            <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:20 }}>
-              <div style={{ width:48, height:48, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:20, fontWeight:900, color:"#0f2d12", flexShrink:0 }}>{verifyPlayer.avatar}</div>
-              <div>
-                <div style={{ fontSize:17, fontWeight:900, color: TEXT }}>Bonjour, {verifyPlayer.name} !</div>
-                <div style={{ fontSize:12, color: MUTED }}>Confirme ton email pour accéder à ton compte.</div>
-              </div>
-            </div>
-
-            <div style={{ marginBottom:20 }}>
-              <label style={{ fontSize:11, fontWeight:700, color: MUTED, textTransform:"uppercase", letterSpacing:1.5, display:"block", marginBottom:6 }}>Ton adresse email</label>
-              <input style={inputS} type="email" placeholder="ton@email.com" value={verifyEmail}
-                onChange={e => { setVerifyEmail(e.target.value); setVerifyError(""); }}
-                onKeyDown={e => e.key === "Enter" && handleVerify()} autoFocus />
-            </div>
-
-            {verifyError && (
-              <div style={{ background:"rgba(220,38,38,0.1)", border:"1px solid rgba(220,38,38,0.3)", borderRadius:10, padding:"10px 14px", fontSize:13, color:"#dc2626", fontWeight:600, marginBottom:16 }}>
-                {verifyError}
-              </div>
-            )}
-
-            <div style={{ display:"flex", gap:10 }}>
-              <button style={{ ...btnS("ghost"), flex:1, border:"1px solid rgba(0,0,0,0.15)" }} onClick={() => setAuthStep("home")}>Retour</button>
-              <button style={{ ...btnS("primary"), flex:2 }} onClick={handleVerify}>Connexion →</button>
             </div>
           </div>
         )}
@@ -1278,8 +1261,8 @@ export default function CocoProno() {
             </div>
 
             {/* Tabs */}
-            <div style={{ display:"flex", gap:8, marginBottom:20 }}>
-              {[["scores","⚽ Scores"],["ko","🏆 Phase finale"],["players","👥 Participants"]].map(([tab, label]) => (
+            <div style={{ display:"flex", gap:6, marginBottom:20, flexWrap:"wrap" }}>
+              {[["scores","⚽ Scores"],["ko","🏆 Finale"],["ia","🦜 IA"],["players","👥 Joueurs"]].map(([tab, label]) => (
                 <button key={tab} onClick={()=>setAdminTab(tab)} style={{ ...navBtnS(adminTab===tab), fontSize:12, background: adminTab===tab?"#15803d":"rgba(255,255,255,0.75)", color: adminTab===tab?"#fff":TEXT, flex:1 }}>{label}</button>
               ))}
             </div>
@@ -1345,6 +1328,132 @@ export default function CocoProno() {
                 ));
               })()}
             </>}
+
+            {/* ── TAB IA ── */}
+            {adminTab === "ia" && (() => {
+              const iaKey = "cocoprono-ia";
+
+              // Créer le joueur IA si absent
+              const ensureIaPlayer = async () => {
+                if (!players.find(p => p.id === iaKey)) {
+                  const iaPlayer = { id: iaKey, name: "CocoProno IA", email: "ia@cocoprono.app", avatar: "🦜" };
+                  const nextPlayers = [...players, iaPlayer];
+                  setPlayers(nextPlayers);
+                  if (storageMode.current === "supabase") await sbInsert("players", iaPlayer);
+                  else await storageSave("cp_players", nextPlayers);
+                }
+              };
+
+              // Sauvegarder un prono IA
+              const saveIaPred = async (matchId, s1, s2) => {
+                if (s1 === "" || s2 === "" ) return;
+                const s1n = parseInt(s1), s2n = parseInt(s2);
+                if (isNaN(s1n) || isNaN(s2n)) return;
+                await ensureIaPlayer();
+                const k = `${iaKey}_${matchId}`;
+                const next = { ...preds, [k]: { s1: s1n, s2: s2n } };
+                setPreds(next);
+                if (storageMode.current === "supabase") {
+                  await sbUpsert("predictions", { player_id: iaKey, match_id: matchId, score1: s1n, score2: s2n });
+                } else {
+                  await storageSave("cp_preds", next);
+                }
+              };
+
+              // Connexion en tant que CocoProno IA
+              const loginAsIa = async () => {
+                await ensureIaPlayer();
+                const iaPlayer = players.find(p => p.id === iaKey) || { id: iaKey, name: "CocoProno IA", email: "ia@cocoprono.app", avatar: "🦜" };
+                if (storageMode.current === "supabase") localStorage.setItem("cp_me", iaKey);
+                else try { await window.storage.set("cp_me", iaKey); } catch {}
+                setMe(iaPlayer);
+                setAdminOk(false);
+                setView("matches");
+              };
+
+              const existingCount = Object.keys(preds).filter(k => k.startsWith(iaKey+"_")).length;
+
+              return (
+                <div>
+                  {/* Header + login button */}
+                  <div style={{ ...card, padding:"16px 18px", marginBottom:16 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:14 }}>
+                      <div style={{ width:46, height:46, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>🦜</div>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontWeight:900, fontSize:15, color:TEXT }}>CocoProno IA</div>
+                        <div style={{ fontSize:12, color:MUTED }}>{existingCount}/72 pronostics saisis</div>
+                      </div>
+                      <button style={{ ...btnS("primary"), padding:"8px 14px", fontSize:12, background:"linear-gradient(135deg,#fbbf24,#f59e0b)", color:"#0f2d12", fontWeight:900 }}
+                        onClick={loginAsIa}>
+                        🔑 Prendre le contrôle
+                      </button>
+                    </div>
+                    <div style={{ fontSize:12, color:MUTED, lineHeight:1.5, borderTop:"1px solid rgba(0,0,0,0.08)", paddingTop:10 }}>
+                      💡 "Prendre le contrôle" te connecte en tant que CocoProno IA — tu peux alors saisir ses pronostics directement depuis la page Matchs, comme n'importe quel joueur.
+                    </div>
+                  </div>
+
+                  {/* Saisie directe match par match */}
+                  <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:10 }}>
+                    Saisie directe des pronostics IA
+                  </div>
+                  <div style={{ display:"flex", gap:6, marginBottom:12, overflowX:"auto" }}>
+                    {["all","1","2","3"].map(md=>(
+                      <button key={md} style={{ ...navBtnS(filterMD===md), flexShrink:0, fontSize:12, background: filterMD===md?"#fbbf24":"rgba(255,255,255,0.75)", color: filterMD===md?"#0f2d12":TEXT }}
+                        onClick={()=>setFilterMD(md)}>{md==="all"?"Tous":"J"+md}</button>
+                    ))}
+                  </div>
+
+                  {ALL_MATCHES.filter(m => filterMD==="all" || m.md===+filterMD).map(m => {
+                    const k = `${iaKey}_${m.id}`;
+                    const pred = preds[k];
+                    const t1 = splitTeam(m.team1), t2 = splitTeam(m.team2);
+                    const real = realScores[m.id];
+                    const pts = calcPts(pred, real);
+                    const meta = pts !== null ? ptsMeta(pts) : null;
+                    return (
+                      <div key={m.id} style={{ ...card, padding:"12px 14px", marginBottom:8,
+                        borderLeft: meta ? `4px solid ${meta.hex}` : pred ? "4px solid #fbbf24" : "4px solid rgba(251,191,36,0.2)" }}>
+                        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+                          <div style={{ display:"flex", gap:6 }}>
+                            <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(21,128,61,0.12)", color:G }}>{m.group}</span>
+                            <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(180,83,9,0.1)", color:GOLD }}>J{m.md}</span>
+                          </div>
+                          <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                            {meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
+                            {real && <span style={{ fontSize:11, fontWeight:700, color:G }}>{real.s1}-{real.s2}</span>}
+                          </div>
+                        </div>
+                        <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap:8 }}>
+                          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                            <span style={{ fontSize:20 }}>{t1.emoji}</span>
+                            <span style={{ fontSize:11, fontWeight:700, color:TEXT, textAlign:"center" }}>{t1.name}</span>
+                            <input type="number" min="0" max="99"
+                              defaultValue={pred?.s1 ?? ""}
+                              placeholder="–"
+                              onBlur={e => { const s2 = document.getElementById(`ia-s2-${m.id}`)?.value ?? ""; saveIaPred(m.id, e.target.value, s2); }}
+                              id={`ia-s1-${m.id}`}
+                              style={{ width:50, height:50, borderRadius:12, border:`2.5px solid ${pred?"#fbbf24":"rgba(251,191,36,0.3)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" }} />
+                          </div>
+                          <div style={{ textAlign:"center", fontSize:13, fontWeight:800, color:MUTED }}>–</div>
+                          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
+                            <span style={{ fontSize:20 }}>{t2.emoji}</span>
+                            <span style={{ fontSize:11, fontWeight:700, color:TEXT, textAlign:"center" }}>{t2.name}</span>
+                            <input type="number" min="0" max="99"
+                              defaultValue={pred?.s2 ?? ""}
+                              placeholder="–"
+                              onBlur={e => { const s1 = document.getElementById(`ia-s1-${m.id}`)?.value ?? ""; saveIaPred(m.id, s1, e.target.value); }}
+                              id={`ia-s2-${m.id}`}
+                              style={{ width:50, height:50, borderRadius:12, border:`2.5px solid ${pred?"#fbbf24":"rgba(251,191,36,0.3)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" }} />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
             {adminTab === "players" && <>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:14 }}>
                 <div style={{ fontSize:13, color:"rgba(255,255,255,0.7)" }}>{players.length} participant{players.length>1?"s":""} inscrit{players.length>1?"s":""}</div>
