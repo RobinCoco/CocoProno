@@ -582,11 +582,30 @@ export default function CocoProno() {
       backgroundImage:`url(${JUNGLE_IMG})`,
       backgroundSize:"cover", backgroundPosition:"center", backgroundAttachment:"fixed",
     }}>
-      <style>{`input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}input[type=number]{-moz-appearance:textfield}`}</style>
+      <style>{`
+        input[type=number]::-webkit-inner-spin-button,
+        input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+        input[type=number]{-moz-appearance:textfield}
+        *{box-sizing:border-box}
+        @media(max-width:480px){
+          .stats-bar{grid-template-columns:repeat(3,1fr)!important}
+          .stats-bar .stat-hidden{display:none!important}
+          .nav-text{display:none}
+          .hero-parrot{height:110px!important}
+          .hero-title{font-size:42px!important;letter-spacing:-1.5px!important}
+          .hero-sub{font-size:14px!important}
+          .match-flag{width:56px!important;height:42px!important}
+          .match-flag span{font-size:36px!important}
+          .score-input{width:46px!important;height:46px!important;font-size:22px!important}
+          .header-inner{height:72px!important;padding:0 12px!important}
+          .header-logo-text{font-size:17px!important}
+          .content-pad{padding:16px 10px!important}
+        }
+      `}</style>
       {/* Overlay */}
       <div style={{ position:"fixed", inset:0, background:"rgba(10,50,15,0.78)", pointerEvents:"none", zIndex:0 }} />
       {/* Header — blanc sur home, sombre ailleurs */}
-      <div style={{
+      <div className="header-inner" style={{
         position:"sticky", top:0, zIndex:50,
         background: me ? "rgba(8,35,12,0.82)" : "rgba(255,255,255,0.92)",
         backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
@@ -599,8 +618,8 @@ export default function CocoProno() {
           )}
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
-          <img src={parrotSrc} alt="Coco" style={{ height:58, width:"auto" }} />
-          <div style={{ fontSize:20, fontWeight:900, letterSpacing:"-0.5px", color: me ? "#fbbf24" : G, lineHeight:1 }}>CocoProno</div>
+          <img src={parrotSrc} alt="Coco" style={{ height:58, width:"auto" }} className="hero-parrot" />
+          <div className="header-logo-text" style={{ fontSize:20, fontWeight:900, letterSpacing:"-0.5px", color: me ? "#fbbf24" : G, lineHeight:1 }}>CocoProno</div>
           <div style={{ fontSize:9, color: me ? "rgba(255,255,255,0.45)" : MUTED, letterSpacing:1.5, textTransform:"uppercase" }}>by Cocopilot · CdM 2026</div>
         </div>
         <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, width:120 }}>
@@ -610,12 +629,12 @@ export default function CocoProno() {
               <button style={navBtnS(view==="ranking")} onClick={()=>setView("ranking")}>🏆</button>
               <button style={navBtnS(view==="admin")} onClick={()=>setView("admin")}>⚙</button>
             </div>
-            <button style={{ fontSize:11, color:"rgba(255,255,255,0.45)", background:"none", border:"none", cursor:"pointer", padding:0 }} onClick={logout}>Changer de joueur</button>
+            <button style={{ fontSize:10, color:"rgba(255,255,255,0.4)", background:"none", border:"none", cursor:"pointer", padding:0, maxWidth:80, textAlign:"right", lineHeight:1.3 }} onClick={logout}>Changer</button>
           </>}
         </div>
       </div>
       {/* Content */}
-      <div style={{ flex:1, overflowY:"auto", padding:"24px 16px", position:"relative", zIndex:1 }}>
+      <div className="content-pad" style={{ flex:1, overflowY:"auto", padding:"24px 16px", position:"relative", zIndex:1 }}>
         {children}
       </div>
     </div>
@@ -637,12 +656,12 @@ export default function CocoProno() {
 
         {/* Hero */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:0, padding:"28px 0 20px" }}>
-          <img src={parrotSrc} alt="Coco" style={{ height:160, width:"auto", flexShrink:0 }} />
+          <img src={parrotSrc} alt="Coco" className="hero-parrot" style={{ height:160, width:"auto", flexShrink:0, maxWidth:"40vw" }} />
           <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
-            <div style={{ fontSize:58, fontWeight:900, color:"#fff", letterSpacing:"-2px", lineHeight:0.95, textShadow:"0 2px 20px rgba(0,0,0,0.4)" }}>
+            <div className="hero-title" style={{ fontSize:58, fontWeight:900, color:"#fff", letterSpacing:"-2px", lineHeight:0.95, textShadow:"0 2px 20px rgba(0,0,0,0.4)" }}>
               Coco<span style={{ color:"#fbbf24" }}>Prono</span>
             </div>
-            <div style={{ fontSize:17, fontWeight:700, color:"rgba(255,255,255,0.90)", letterSpacing:"-0.3px", textShadow:"0 1px 8px rgba(0,0,0,0.4)" }}>
+            <div className="hero-sub" style={{ fontSize:17, fontWeight:700, color:"rgba(255,255,255,0.90)", letterSpacing:"-0.3px", textShadow:"0 1px 8px rgba(0,0,0,0.4)" }}>
               Qui peut battre l'IA&nbsp;?
             </div>
             <div style={{ fontSize:12, color:"rgba(255,255,255,0.55)", letterSpacing:1.5, textTransform:"uppercase", marginTop:2 }}>
@@ -791,17 +810,17 @@ export default function CocoProno() {
     <>
       <div style={{ maxWidth:720, margin:"0 auto" }}>
         {myStats && (
-          <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:8, marginBottom:20 }}>
+          <div className="stats-bar" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:6, marginBottom:16 }}>
             {[
-              { label:"Classement",  val:`#${myRank}`, hex:"#b45309" },
-              { label:"Points",      val:myStats.pts,  hex: G },
-              { label:"🏆 Exacts",   val:myStats.exact,  hex:"#15803d" },
-              { label:"🎯 Écarts",   val:myStats.ecart,  hex:"#0d9488" },
-              { label:"⚡ Partiels", val:myStats.partial, hex:"#1d4ed8" },
+              { label:"Classement",  val:`#${myRank}`, hex:"#b45309", hide:false },
+              { label:"Points",      val:myStats.pts,  hex: G, hide:false },
+              { label:"🏆 Exacts",   val:myStats.exact,  hex:"#15803d", hide:false },
+              { label:"🎯 Écarts",   val:myStats.ecart,  hex:"#0d9488", hide:true },
+              { label:"⚡ Partiels", val:myStats.partial, hex:"#1d4ed8", hide:true },
             ].map(s => (
-              <div key={s.label} style={{ ...card, padding:"10px 8px", textAlign:"center" }}>
-                <div style={{ fontSize:20, fontWeight:900, color:s.hex }}>{s.val}</div>
-                <div style={{ fontSize:10, color: MUTED, marginTop:2, lineHeight:1.2 }}>{s.label}</div>
+              <div key={s.label} className={s.hide?"stat-hidden":""} style={{ ...card, padding:"8px 4px", textAlign:"center" }}>
+                <div style={{ fontSize:18, fontWeight:900, color:s.hex }}>{s.val}</div>
+                <div style={{ fontSize:9, color: MUTED, marginTop:1, lineHeight:1.2 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -871,12 +890,13 @@ export default function CocoProno() {
               color: locked ? "#999" : G, outline:"none", MozAppearance:"textfield",
               cursor: locked ? "not-allowed" : "text",
             };
+            const iClass = "score-input";
 
             const FlagBox = ({t}) => (
-              <div style={{ width:72, height:52, borderRadius:8, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(0,0,0,0.08)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", overflow:"hidden", flexShrink:0 }}>
+              <div className="match-flag" style={{ width:72, height:52, borderRadius:8, background:"rgba(255,255,255,0.85)", border:"1px solid rgba(0,0,0,0.08)", display:"flex", alignItems:"center", justifyContent:"center", boxShadow:"0 2px 10px rgba(0,0,0,0.12)", overflow:"hidden", flexShrink:0 }}>
                 {t.imgUrl
                   ? <img src={t.imgUrl} alt={t.name} style={{ width:"100%", height:"100%", objectFit:"cover" }} />
-                  : <span style={{ fontSize:44, lineHeight:1, fontFamily:"'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif" }}>{t.emoji}</span>
+                  : <span className="match-flag-emoji" style={{ fontSize:44, lineHeight:1, fontFamily:"'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif" }}>{t.emoji}</span>
                 }
               </div>
             );
@@ -885,7 +905,7 @@ export default function CocoProno() {
               ? <div style={{ width:52, height:52, borderRadius:12, background:"rgba(200,200,200,0.2)", border:"2px solid rgba(150,150,150,0.2)", display:"flex", alignItems:"center", justifyContent:"center" }}>
                   <span style={{ fontSize:22, fontWeight:900, color:"#999" }}>{v !== "" ? v : "–"}</span>
                 </div>
-              : <input type="number" min="0" max="99" value={v} placeholder="–" style={iStyle}
+              : <input type="number" min="0" max="99" value={v} placeholder="–" style={iStyle} className={iClass}
                   onClick={e=>e.stopPropagation()} onChange={onCh} onBlur={onBl} onFocus={e=>e.target.select()} />;
 
             return (
