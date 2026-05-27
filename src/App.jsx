@@ -434,11 +434,20 @@ export default function CocoProno() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (storageMode.current !== "supabase") return;
-      const sc = await sbSelect("real_scores");
+      // Rafraîchit scores réels ET pronostics (pour que les pronos IA soient visibles)
+      const [sc, pr] = await Promise.all([
+        sbSelect("real_scores"),
+        sbSelect("predictions"),
+      ]);
       if (Array.isArray(sc)) {
         const scoresMap = {};
         sc.forEach(r => { scoresMap[r.match_id] = { s1: r.score1, s2: r.score2 }; });
         setRealScores(scoresMap);
+      }
+      if (Array.isArray(pr)) {
+        const predsMap = {};
+        pr.forEach(r => { predsMap[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+        setPreds(predsMap);
       }
     }, 15000);
     return () => clearInterval(interval);
@@ -855,7 +864,8 @@ export default function CocoProno() {
             const real = realScores[m.id];
             const pts  = myPts(m);
             const meta = pts !== null ? ptsMeta(pts) : null;
-            const aiPred = AI_PREDS[m.id];
+            // Prono IA : vrais pronos en priorité, fallback sur les factices
+            const aiPred = preds[`cocoprono-ia_${m.id}`] || AI_PREDS[m.id];
             const aiPts  = calcPts(aiPred, real);
             const aiMeta = aiPts !== null ? ptsMeta(aiPts) : null;
             const local  = inlineInputs[m.id] ?? {};
