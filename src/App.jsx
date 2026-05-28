@@ -1457,6 +1457,27 @@ export default function CocoProno() {
           <div style={{ fontSize:26, fontWeight:900, color:"#fbbf24", letterSpacing:"-0.5px" }}>Classement</div>
         </div>
 
+        {/* Prize banner */}
+        <div style={{
+          marginBottom:20, borderRadius:16, overflow:"hidden",
+          border:"1.5px solid rgba(251,191,36,0.5)",
+          boxShadow:"0 4px 16px rgba(0,0,0,0.25)",
+        }}>
+          <div style={{ background:"linear-gradient(135deg,#f59e0b,#fbbf24)", padding:"12px 18px", display:"flex", alignItems:"center", justifyContent:"space-between" }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:800, color:"rgba(0,0,0,0.4)", textTransform:"uppercase", letterSpacing:2 }}>Prix du vainqueur</div>
+              <div style={{ fontSize:20, fontWeight:900, color:"#1c0a00" }}>Un maillot de ton choix 👕</div>
+            </div>
+            <div style={{ fontSize:44, lineHeight:1 }}>🏆</div>
+          </div>
+          <div style={{ background:"rgba(10,20,10,0.9)", padding:"9px 18px", display:"flex", alignItems:"center", gap:10 }}>
+            <span style={{ fontSize:16 }}>🥇</span>
+            <span style={{ fontSize:12, color:"rgba(255,255,255,0.8)" }}>
+              Le <strong style={{ color:"#fbbf24" }}>meilleur pronostiqueur</strong> à la fin de la Coupe du Monde repart avec le maillot de son choix !
+            </span>
+          </div>
+        </div>
+
         {leaderboard.length >= 3 && (
           <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap:10, marginBottom:24 }}>
             {[leaderboard[1], leaderboard[0], leaderboard[2]].map((p,i) => {
