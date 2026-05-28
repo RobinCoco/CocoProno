@@ -699,52 +699,94 @@ export default function CocoProno() {
         input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
         input[type=number]{-moz-appearance:textfield}
         *{box-sizing:border-box}
-        @media(max-width:480px){
+        .bottom-nav{display:none}
+        .top-nav-btns{display:flex;gap:4px}
+        @media(max-width:600px){
           .stats-bar{grid-template-columns:repeat(3,1fr)!important}
-          .stats-bar .stat-hidden{display:none!important}
-          .nav-text{display:none}
+          .stat-hidden{display:none!important}
           .hero-parrot{height:110px!important}
           .hero-title{font-size:42px!important;letter-spacing:-1.5px!important}
           .hero-sub{font-size:14px!important}
           .match-flag{width:56px!important;height:42px!important}
-          .match-flag span{font-size:36px!important}
           .score-input{width:46px!important;height:46px!important;font-size:22px!important}
-          .header-inner{height:72px!important;padding:0 12px!important}
-          .header-logo-text{font-size:17px!important}
-          .content-pad{padding:16px 10px!important}
+          .header-inner{height:64px!important;padding:0 14px!important}
+          .header-logo-text{font-size:16px!important}
+          .content-pad{padding:14px 10px 80px!important}
+          .top-nav-btns{display:none!important}
+          .logout-btn{display:none!important}
+          .bottom-nav{display:flex!important;position:fixed;bottom:0;left:0;right:0;z-index:50;
+            background:rgba(8,35,12,0.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(255,255,255,0.1);padding:6px 0 env(safe-area-inset-bottom,6px)}
         }
       `}</style>
       {/* Overlay */}
       <div style={{ position:"fixed", inset:0, background:"rgba(10,50,15,0.78)", pointerEvents:"none", zIndex:0 }} />
-      {/* Header — blanc sur home, sombre ailleurs */}
+
+      {/* ── Header ── */}
       <div className="header-inner" style={{
         position:"sticky", top:0, zIndex:50,
-        background: me ? "rgba(8,35,12,0.82)" : "rgba(255,255,255,0.92)",
+        background: me ? "rgba(8,35,12,0.92)" : "rgba(255,255,255,0.92)",
         backdropFilter:"blur(12px)", WebkitBackdropFilter:"blur(12px)",
-        borderBottom: me ? "1px solid rgba(255,255,255,0.12)" : "1px solid rgba(0,0,0,0.08)",
+        borderBottom: me ? "1px solid rgba(255,255,255,0.1)" : "1px solid rgba(0,0,0,0.08)",
         padding:"0 20px", height:90, display:"flex", alignItems:"center", justifyContent:"space-between", flexShrink:0,
       }}>
-        <div style={{ width:120, display:"flex", alignItems:"center" }}>
-          {me && (
-            <div style={{ width:34, height:34, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:14, fontWeight:900, color:"#0f2d12" }}>{me.avatar}</div>
-          )}
-        </div>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
-          <img src={parrotSrc} alt="Coco" style={{ height:58, width:"auto" }} className="hero-parrot" />
-          <div className="header-logo-text" style={{ fontSize:20, fontWeight:900, letterSpacing:"-0.5px", color: me ? "#fbbf24" : G, lineHeight:1 }}>CocoProno</div>
-          <div style={{ fontSize:9, color: me ? "rgba(255,255,255,0.45)" : MUTED, letterSpacing:1.5, textTransform:"uppercase" }}>by Cocopilot · CdM 2026</div>
-        </div>
-        <div style={{ display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6, width:120 }}>
+        {/* Gauche : avatar + nom */}
+        <div style={{ width:110, display:"flex", alignItems:"center", gap:8 }}>
           {me && <>
-            <div style={{ display:"flex", gap:4 }}>
+            <div style={{ width:32, height:32, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:13, fontWeight:900, color:"#0f2d12", flexShrink:0 }}>{me.avatar}</div>
+            <div className="logout-btn" style={{ lineHeight:1.3 }}>
+              <div style={{ fontSize:11, fontWeight:700, color: me ? "#fff" : TEXT }}>{me.name?.split(" ")[0]}</div>
+              <button style={{ fontSize:10, color:"rgba(255,255,255,0.4)", background:"none", border:"none", cursor:"pointer", padding:0 }} onClick={logout}>Changer</button>
+            </div>
+          </>}
+        </div>
+
+        {/* Centre : logo */}
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
+          <img src={parrotSrc} alt="Coco" className="hero-parrot" style={{ height:52, width:"auto" }} />
+          <div className="header-logo-text" style={{ fontSize:18, fontWeight:900, letterSpacing:"-0.5px", color: me ? "#fbbf24" : G, lineHeight:1 }}>CocoProno</div>
+          <div style={{ fontSize:9, color: me ? "rgba(255,255,255,0.4)" : MUTED, letterSpacing:1.5, textTransform:"uppercase" }}>by Cocopilot · CdM 2026</div>
+        </div>
+
+        {/* Droite : nav desktop */}
+        <div style={{ width:110, display:"flex", flexDirection:"column", alignItems:"flex-end", gap:6 }}>
+          {me && <>
+            <div className="top-nav-btns">
               <button style={navBtnS(view==="matches")} onClick={()=>setView("matches")}>Matchs</button>
               <button style={navBtnS(view==="ranking")} onClick={()=>setView("ranking")}>🏆</button>
               {isAdmin && <button style={navBtnS(view==="admin")} onClick={()=>setView("admin")}>⚙</button>}
             </div>
-            <button style={{ fontSize:10, color:"rgba(255,255,255,0.4)", background:"none", border:"none", cursor:"pointer", padding:0, maxWidth:80, textAlign:"right", lineHeight:1.3 }} onClick={logout}>Changer</button>
           </>}
         </div>
       </div>
+
+      {/* ── Barre de nav mobile (fixée en bas) ── */}
+      {me && (
+        <nav className="bottom-nav">
+          {[
+            { id:"matches", icon:"⚽", label:"Matchs" },
+            { id:"ranking", icon:"🏆", label:"Classement" },
+            ...(isAdmin ? [{ id:"admin", icon:"⚙️", label:"Admin" }] : []),
+            { id:"__logout__", icon:"👤", label: (me.name||"Moi").split(" ")[0] },
+          ].map(item => (
+            <button key={item.id}
+              onClick={() => item.id === "__logout__" ? logout() : setView(item.id)}
+              style={{
+                flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2,
+                background:"none", border:"none", cursor:"pointer", padding:"6px 2px",
+                color: view === item.id ? "#fbbf24" : "rgba(255,255,255,0.5)",
+                transition:"color 0.15s",
+              }}>
+              <span style={{ fontSize:22, lineHeight:1 }}>{item.icon}</span>
+              <span style={{ fontSize:10, fontWeight:700 }}>{item.label}</span>
+              {view === item.id && item.id !== "__logout__" && (
+                <div style={{ width:20, height:2.5, borderRadius:2, background:"#fbbf24", marginTop:1 }} />
+              )}
+            </button>
+          ))}
+        </nav>
+      )}
+
       {/* Content */}
       <div className="content-pad" style={{ flex:1, overflowY:"auto", padding:"24px 16px", position:"relative", zIndex:1 }}>
         {children}
