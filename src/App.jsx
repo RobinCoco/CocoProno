@@ -574,7 +574,7 @@ export default function CocoProno() {
     }
   };
 
-  const humanPlayers = [...players].map(p => {
+  const humanPlayers = [...players].filter(p => p.id !== "cocoprono-ia").map(p => {
     let pts = 0, exact = 0, ecart = 0, partial = 0, correct = 0;
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
       const pred = preds[`${p.id}_${m.id}`];
@@ -585,14 +585,18 @@ export default function CocoProno() {
     return { ...p, pts, exact, ecart, partial, correct };
   });
 
-  // Ajouter l'IA au classement
+  // Entrée IA : utilise le vrai compte cocoprono-ia s'il existe, sinon l'entrée statique
+  const realIaPlayer = players.find(p => p.id === "cocoprono-ia");
   const aiEntry = (() => {
+    const iaId = realIaPlayer ? "cocoprono-ia" : "__ai__";
     let pts = 0, exact = 0, ecart = 0, partial = 0, correct = 0;
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
-      const n = calcPts(AI_PREDS[m.id], realScores[m.id]);
+      const pred = preds[`${iaId}_${m.id}`] || (iaId === "__ai__" ? AI_PREDS[m.id] : null);
+      const real = realScores[m.id];
+      const n = calcPts(pred, real);
       if (n !== null) { pts += n; if(n===5) exact++; else if(n===3) ecart++; else if(n===2) partial++; else if(n===1) correct++; }
     });
-    return { id:"__ai__", name:"CocoProno IA", avatar:"🦜", isAI:true, pts, exact, ecart, partial, correct };
+    return { id: iaId, name:"CocoProno IA", avatar:"🦜", isAI:true, pts, exact, ecart, partial, correct };
   })();
 
   const leaderboard = [...humanPlayers, aiEntry].sort((a,b) => b.pts - a.pts || b.exact - a.exact || b.ecart - a.ecart);
