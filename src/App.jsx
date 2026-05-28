@@ -756,6 +756,10 @@ export default function CocoProno() {
               <button style={navBtnS(view==="ranking")} onClick={()=>setView("ranking")}>🏆</button>
               {isAdmin && <button style={navBtnS(view==="admin")} onClick={()=>setView("admin")}>⚙</button>}
             </div>
+            <a href="https://cocopilot.blog/" target="_blank" rel="noreferrer"
+              style={{ fontSize:10, color:"rgba(255,255,255,0.35)", textDecoration:"none", letterSpacing:0.3 }}>
+              cocopilot.blog ↗
+            </a>
           </>}
         </div>
       </div>
@@ -768,9 +772,14 @@ export default function CocoProno() {
             { id:"ranking", icon:"🏆", label:"Classement" },
             ...(isAdmin ? [{ id:"admin", icon:"⚙️", label:"Admin" }] : []),
             { id:"__logout__", icon:"👤", label: (me.name||"Moi").split(" ")[0] },
+            { id:"__blog__", icon:"🌐", label:"Blog" },
           ].map(item => (
             <button key={item.id}
-              onClick={() => item.id === "__logout__" ? logout() : setView(item.id)}
+              onClick={() => {
+                if (item.id === "__logout__") logout();
+                else if (item.id === "__blog__") window.open("https://cocopilot.blog/", "_blank");
+                else setView(item.id);
+              }}
               style={{
                 flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:2,
                 background:"none", border:"none", cursor:"pointer", padding:"6px 2px",
@@ -779,7 +788,7 @@ export default function CocoProno() {
               }}>
               <span style={{ fontSize:22, lineHeight:1 }}>{item.icon}</span>
               <span style={{ fontSize:10, fontWeight:700 }}>{item.label}</span>
-              {view === item.id && item.id !== "__logout__" && (
+              {view === item.id && item.id !== "__logout__" && item.id !== "__blog__" && (
                 <div style={{ width:20, height:2.5, borderRadius:2, background:"#fbbf24", marginTop:1 }} />
               )}
             </button>
