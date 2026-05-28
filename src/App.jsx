@@ -23,7 +23,7 @@ const sbUpsert = async (table, data) => {
 };
 
 const PARROT_IMG = "/images/parrot.png";
-const JUNGLE_IMG = "/images/jungle.png";
+const JUNGLE_IMG = "/images/jungle.webp";
 
 const GROUPS = {
   A: ["🇲🇽 Mexique", "🇿🇦 Afrique du Sud", "🇰🇷 Corée du Sud", "🇨🇿 Tchéquie"],
