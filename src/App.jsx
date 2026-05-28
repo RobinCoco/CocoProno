@@ -79,6 +79,74 @@ function generateMatches() {
 
 const ALL_MATCHES = generateMatches();
 
+// ─── Calcul automatique des qualifiés ────────────────────────────────────────
+// Retourne { rank1, rank2, rank3 } par groupe + 8 meilleurs 3es selon FIFA 2026
+function computeQualified(realScores) {
+  const groupStandings = {};
+
+  // Calcul classement de chaque groupe
+  Object.entries(GROUPS).forEach(([g, teams]) => {
+    const stats = {};
+    teams.forEach(t => { stats[t] = { pts:0, gf:0, ga:0, gd:0, played:0, name:t }; });
+
+    ALL_MATCHES.filter(m => m.gKey === g).forEach(m => {
+      const r = realScores[m.id];
+      if (!r) return;
+      const { s1, s2 } = r;
+      stats[m.team1].played++; stats[m.team2].played++;
+      stats[m.team1].gf += s1; stats[m.team1].ga += s2; stats[m.team1].gd += s1-s2;
+      stats[m.team2].gf += s2; stats[m.team2].ga += s1; stats[m.team2].gd += s2-s1;
+      if (s1 > s2)      { stats[m.team1].pts += 3; }
+      else if (s1 < s2) { stats[m.team2].pts += 3; }
+      else              { stats[m.team1].pts += 1; stats[m.team2].pts += 1; }
+    });
+
+    const sorted = Object.values(stats).sort((a, b) =>
+      b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.name.localeCompare(b.name)
+    );
+    // Seulement si toutes les J3 sont jouées (6 matchs par groupe)
+    const played = Object.values(stats).reduce((s, t) => s + t.played, 0);
+    groupStandings[g] = { teams: sorted, complete: played >= 6 };
+  });
+
+  // 1ers et 2es directs
+  const qualified = {};
+  Object.entries(groupStandings).forEach(([g, { teams, complete }]) => {
+    if (!complete) return;
+    qualified[`1${g}`] = teams[0]?.name;
+    qualified[`2${g}`] = teams[1]?.name;
+    qualified[`3${g}`] = { ...teams[2], group: g };
+  });
+
+  // 8 meilleurs 3es — critères FIFA : pts → diff → buts
+  const thirds = Object.values(groupStandings)
+    .filter(gs => gs.complete && gs.teams[2])
+    .map(gs => ({ ...gs.teams[2] }))
+    .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf)
+    .slice(0, 8)
+    .map(t => t.name);
+
+  return { groupStandings, qualified, thirds };
+}
+
+// Mapping huitièmes → slots qualifiés (selon tirage FIFA 2026 provisoire)
+// H1: 1A vs 2B | H2: 1C vs 2D | H3: 1E vs 2F | H4: 1G vs 2H
+// H5: 1I vs 2J | H6: 1K vs 2L | H7: 2A vs 1B | H8: 2C vs 1D
+// H9: 2E vs 1F | H10: 2G vs 1H | H11: 2I vs 1J | H12: 2K vs 1L
+// H13-H16: meilleurs 3es
+const KO_SLOT_MAP = {
+  1001: { t1:"1A", t2:"2B" }, 1002: { t1:"1C", t2:"2D" },
+  1003: { t1:"1E", t2:"2F" }, 1004: { t1:"1G", t2:"2H" },
+  1005: { t1:"1I", t2:"2J" }, 1006: { t1:"1K", t2:"2L" },
+  1007: { t1:"2A", t2:"1B" }, 1008: { t1:"2C", t2:"1D" },
+  1009: { t1:"2E", t2:"1F" }, 1010: { t1:"2G", t2:"1H" },
+  1011: { t1:"2I", t2:"1J" }, 1012: { t1:"2K", t2:"1L" },
+  // 3es : attribués dans l'ordre des meilleurs 3es une fois connus
+  1013: { t1:"3e1", t2:"3e2" }, 1014: { t1:"3e3", t2:"3e4" },
+  1015: { t1:"3e5", t2:"3e6" }, 1016: { t1:"3e7", t2:"3e8" },
+};
+
+
 // ─── Phase finale ─────────────────────────────────────
 // IDs 1001+ pour éviter les collisions avec les matchs de groupes
 const KNOCKOUT_MATCHES = [
@@ -678,6 +746,28 @@ export default function CocoProno() {
 
   const myPred = (m) => preds[me ? `${me.id}_${m.id}` : null];
   const myPts  = (m) => calcPts(myPred(m), realScores[m.id]);
+
+  // ─── Calcul automatique des qualifiés ─────────────────
+  const { groupStandings, qualified, thirds } = computeQualified(realScores);
+
+  // Résout un slot ("1A", "2B", "3e1"...) en nom d'équipe
+  const resolveSlot = (slot) => {
+    if (!slot) return null;
+    if (slot.startsWith("3e")) {
+      const idx = parseInt(slot.replace("3e","")) - 1;
+      return thirds[idx] || null;
+    }
+    return qualified[slot] || null;
+  };
+
+  // Fusionne : koTeams manuels priment sur le calcul auto
+  const resolveKoTeam = (matchId, side) => {
+    const manual = koTeams[matchId]?.[side];
+    if (manual && manual.trim()) return manual; // priorité au manuel
+    const slot = KO_SLOT_MAP[matchId]?.[side === "team1" ? "t1" : "t2"];
+    const auto = resolveSlot(slot);
+    return auto || null;
+  };
   const myStats = me ? leaderboard.find(p => p.id === me.id) : null;
   const myRank  = me ? leaderboard.findIndex(p => p.id === me.id) + 1 : null;
 
@@ -998,8 +1088,13 @@ export default function CocoProno() {
           };
 
           const renderMatch = (m) => {
-            const t1str = (filterPhase==="finale" && koTeams[m.id]?.team1) || m.team1;
-            const t2str = (filterPhase==="finale" && koTeams[m.id]?.team2) || m.team2;
+            const isKo = m.id >= 1001;
+            const t1str = isKo
+              ? (resolveKoTeam(m.id, "team1") || koTeams[m.id]?.team1 || m.team1)
+              : m.team1;
+            const t2str = isKo
+              ? (resolveKoTeam(m.id, "team2") || koTeams[m.id]?.team2 || m.team2)
+              : m.team2;
             const t1 = splitTeam(t1str);
             const t2 = splitTeam(t2str);
             const pred = myPred(m);
@@ -1502,35 +1597,79 @@ export default function CocoProno() {
 
             {/* ── TAB KO TEAMS ── */}
             {adminTab === "ko" && <>
-              <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginBottom:16, lineHeight:1.5 }}>
-                Renseigne les équipes qualifiées pour la phase finale. Le drapeau sera mis à jour automatiquement si tu uses le format "🇫🇷 France".
+              <div style={{ fontSize:12, color:"rgba(255,255,255,0.6)", marginBottom:12, lineHeight:1.5, background:"rgba(21,128,61,0.1)", borderRadius:10, padding:"10px 14px" }}>
+                ✨ <strong style={{color:"#fbbf24"}}>Remplissage automatique</strong> — les équipes qualifiées sont calculées automatiquement dès que tous les scores de groupes sont saisis.<br/>
+                Tu peux corriger manuellement en cas d'erreur — tes corrections sont prioritaires.
               </div>
-              {(() => {
-                const rounds = [...new Set(ALL_KO_MATCHES.map(m => m.round))];
-                return rounds.map(round => (
-                  <div key={round} style={{ marginBottom:20 }}>
-                    <div style={{ fontSize:13, fontWeight:800, color:"#fbbf24", marginBottom:10 }}>{round}</div>
-                    {ALL_KO_MATCHES.filter(m => m.round === round).map(m => (
-                      <div key={m.id} style={{ ...card, padding:"12px 14px", marginBottom:8 }}>
-                        <div style={{ fontSize:11, color:MUTED, marginBottom:8, fontWeight:700 }}>{m.roundShort} · {m.date}/2026</div>
-                        <div style={{ display:"grid", gridTemplateColumns:"1fr 24px 1fr", gap:8, alignItems:"center" }}>
-                          <input style={{ ...inputS, fontSize:13, padding:"8px 10px" }}
-                            placeholder={m.team1}
-                            value={koTeams[m.id]?.team1 || ""}
-                            onChange={e => saveKoTeams({ ...koTeams, [m.id]: { ...koTeams[m.id], team1: e.target.value, team2: koTeams[m.id]?.team2 || "" } })}
-                          />
-                          <div style={{ textAlign:"center", fontWeight:900, color:MUTED, fontSize:14 }}>–</div>
-                          <input style={{ ...inputS, fontSize:13, padding:"8px 10px" }}
-                            placeholder={m.team2}
-                            value={koTeams[m.id]?.team2 || ""}
-                            onChange={e => saveKoTeams({ ...koTeams, [m.id]: { team1: koTeams[m.id]?.team1 || "", ...koTeams[m.id], team2: e.target.value } })}
-                          />
-                        </div>
+
+              {/* Résumé des qualifiés par groupe */}
+              <div style={{ marginBottom:16 }}>
+                <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Qualifiés calculés</div>
+                <div style={{ display:"grid", gridTemplateColumns:"repeat(3,1fr)", gap:6 }}>
+                  {Object.entries(GROUPS).map(([g]) => {
+                    const gs = groupStandings[g];
+                    const t1 = qualified[`1${g}`], t2 = qualified[`2${g}`];
+                    const t3 = gs?.teams[2];
+                    const isComplete = gs?.complete;
+                    const f1 = t1 ? splitTeam(t1) : null;
+                    const f2 = t2 ? splitTeam(t2) : null;
+                    return (
+                      <div key={g} style={{ ...card, padding:"8px 10px", opacity: isComplete ? 1 : 0.5 }}>
+                        <div style={{ fontSize:10, fontWeight:800, color:G, marginBottom:4 }}>Groupe {g}</div>
+                        {isComplete ? <>
+                          <div style={{ fontSize:11, color:TEXT }}>🥇 {f1?.emoji} {f1?.name || "?"}</div>
+                          <div style={{ fontSize:11, color:TEXT }}>🥈 {f2?.emoji} {splitTeam(t2)?.name || "?"}</div>
+                          <div style={{ fontSize:10, color:MUTED }}>3e {splitTeam(t3?.name)?.emoji} {splitTeam(t3?.name)?.name}</div>
+                        </> : <div style={{ fontSize:10, color:MUTED }}>En attente des scores J3</div>}
                       </div>
-                    ))}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Meilleurs 3es */}
+              {thirds.length > 0 && (
+                <div style={{ ...card, padding:"12px 14px", marginBottom:16 }}>
+                  <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:1.5, marginBottom:8 }}>8 meilleurs 3es qualifiés</div>
+                  <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+                    {thirds.map((t,i) => {
+                      const f = splitTeam(t);
+                      return <span key={i} style={{ fontSize:12, background:"rgba(21,128,61,0.1)", border:"1px solid rgba(21,128,61,0.25)", borderRadius:8, padding:"3px 8px", color:TEXT }}>{f.emoji} {f.name}</span>;
+                    })}
                   </div>
-                ));
-              })()}
+                </div>
+              )}
+
+              {/* Corrections manuelles huitièmes */}
+              <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Corrections manuelles (huitièmes)</div>
+              {ALL_KO_MATCHES.filter(m => m.round === "Huitièmes").map(m => {
+                const autoT1 = resolveKoTeam(m.id, "team1");
+                const autoT2 = resolveKoTeam(m.id, "team2");
+                return (
+                  <div key={m.id} style={{ ...card, padding:"10px 12px", marginBottom:8 }}>
+                    <div style={{ fontSize:10, fontWeight:700, color:MUTED, marginBottom:6 }}>{m.roundShort} · {m.date}/2026</div>
+                    <div style={{ display:"grid", gridTemplateColumns:"1fr 24px 1fr", gap:6, alignItems:"center" }}>
+                      <div>
+                        {autoT1 && !koTeams[m.id]?.team1 && <div style={{ fontSize:10, color:G, marginBottom:3 }}>Auto : {splitTeam(autoT1).emoji} {splitTeam(autoT1).name}</div>}
+                        <input style={{ ...inputS, fontSize:12, padding:"6px 8px" }}
+                          placeholder={autoT1 ? `✓ ${splitTeam(autoT1).name}` : m.team1}
+                          value={koTeams[m.id]?.team1 || ""}
+                          onChange={e => saveKoTeams({ ...koTeams, [m.id]: { ...koTeams[m.id], team1: e.target.value, team2: koTeams[m.id]?.team2 || "" } })}
+                        />
+                      </div>
+                      <div style={{ textAlign:"center", fontWeight:900, color:MUTED }}>–</div>
+                      <div>
+                        {autoT2 && !koTeams[m.id]?.team2 && <div style={{ fontSize:10, color:G, marginBottom:3 }}>Auto : {splitTeam(autoT2).emoji} {splitTeam(autoT2).name}</div>}
+                        <input style={{ ...inputS, fontSize:12, padding:"6px 8px" }}
+                          placeholder={autoT2 ? `✓ ${splitTeam(autoT2).name}` : m.team2}
+                          value={koTeams[m.id]?.team2 || ""}
+                          onChange={e => saveKoTeams({ ...koTeams, [m.id]: { team1: koTeams[m.id]?.team1 || "", ...koTeams[m.id], team2: e.target.value } })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
             </>}
 
             {/* ── TAB IA ── */}
