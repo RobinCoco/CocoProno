@@ -536,12 +536,24 @@ export default function CocoProno() {
       if (Array.isArray(pr)) {
         const predsFromDb = {};
         pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
-        // Fusionne avec les preds en mémoire — ne pas écraser les saisies locales
         setPreds(prev => ({ ...prev, ...predsFromDb }));
       }
     }, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  // Rechargement des pronos depuis Supabase quand on ouvre le classement
+  useEffect(() => {
+    if (view !== "ranking" || storageMode.current !== "supabase") return;
+    (async () => {
+      const pr = await sbSelect("predictions");
+      if (Array.isArray(pr)) {
+        const predsFromDb = {};
+        pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+        setPreds(prev => ({ ...prev, ...predsFromDb }));
+      }
+    })();
+  }, [view]);
 
   const maskEmail = (email) => {
     if (!email || !email.includes("@")) return "***";
@@ -1472,19 +1484,6 @@ export default function CocoProno() {
   );
 
   // ─── RANKING ─────────────────────────────────────
-  // Rechargement des pronos depuis Supabase quand on ouvre le classement
-  useEffect(() => {
-    if (view !== "ranking" || storageMode.current !== "supabase") return;
-    (async () => {
-      const pr = await sbSelect("predictions");
-      if (Array.isArray(pr)) {
-        const predsFromDb = {};
-        pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
-        setPreds(prev => ({ ...prev, ...predsFromDb }));
-      }
-    })();
-  }, [view]);
-
   if (view === "ranking") return pageWrap(
     <>
       <div style={{ maxWidth:600, margin:"0 auto" }}>
