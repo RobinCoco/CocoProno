@@ -375,6 +375,9 @@ export default function CocoProno() {
   const [players, setPlayers] = useState([]);
   const [me, setMe] = useState(null);
   const [preds, setPreds] = useState({});
+  const predsRef = useRef({});
+  // Synchronise predsRef à chaque changement de preds
+  useEffect(() => { predsRef.current = preds; }, [preds]);
   const [realScores, setRealScores] = useState({});
   const [loading, setLoading] = useState(true);
 
@@ -614,13 +617,11 @@ export default function CocoProno() {
     if (isNaN(s1n) || isNaN(s2n)) return;
     const k = `${me.id}_${matchId}`;
     const val = { s1: s1n, s2: s2n };
-    // Mise à jour fonctionnelle pour éviter les closures stale
     setPreds(prev => ({ ...prev, [k]: val }));
     if (storageMode.current === "supabase") {
       await sbUpsert("predictions", { player_id: me.id, match_id: matchId, score1: s1n, score2: s2n });
     } else {
-      // En mode storage : on re-lit preds depuis le state pour avoir la version à jour
-      await storageSave("cp_preds", { ...preds, [k]: val });
+      await storageSave("cp_preds", { ...predsRef.current, [k]: val });
     }
   };
 
@@ -668,8 +669,8 @@ export default function CocoProno() {
           saved++;
         }
       } else {
-        // Mode local
-        const newPreds = { ...preds };
+        // Mode local — utilise predsRef pour avoir la version courante
+        const newPreds = { ...predsRef.current };
         Object.entries(allToSave).forEach(([mid, v]) => {
           newPreds[`${me.id}_${mid}`] = v;
         });
@@ -678,10 +679,12 @@ export default function CocoProno() {
         saved = Object.keys(allToSave).length;
       }
 
-      // Met à jour le state local
-      const merged = { ...preds };
-      Object.entries(allToSave).forEach(([mid, v]) => { merged[`${me.id}_${mid}`] = v; });
-      setPreds(merged);
+      // Met à jour le state local avec mise à jour fonctionnelle
+      setPreds(prev => {
+        const merged = { ...prev };
+        Object.entries(allToSave).forEach(([mid, v]) => { merged[`${me.id}_${mid}`] = v; });
+        return merged;
+      });
       setInlineInputs({});
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 3000);
@@ -1806,12 +1809,14 @@ export default function CocoProno() {
                 if (isNaN(s1n) || isNaN(s2n)) return;
                 await ensureIaPlayer();
                 const k = `${iaKey}_${matchId}`;
-                const next = { ...preds, [k]: { s1: s1n, s2: s2n } };
-                setPreds(next);
+                const val = { s1: s1n, s2: s2n };
+                // Mise à jour fonctionnelle — évite la closure stale
+                setPreds(prev => ({ ...prev, [k]: val }));
                 if (storageMode.current === "supabase") {
                   await sbUpsert("predictions", { player_id: iaKey, match_id: matchId, score1: s1n, score2: s2n });
                 } else {
-                  await storageSave("cp_preds", next);
+                  // Utilise predsRef pour avoir la valeur courante, pas la valeur capturée
+                  await storageSave("cp_preds", { ...predsRef.current, [k]: val });
                 }
               };
 
