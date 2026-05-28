@@ -521,7 +521,6 @@ export default function CocoProno() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (storageMode.current !== "supabase") return;
-      // Rafraîchit scores réels ET pronostics (pour que les pronos IA soient visibles)
       const [sc, pr] = await Promise.all([
         sbSelect("real_scores"),
         sbSelect("predictions"),
@@ -532,9 +531,10 @@ export default function CocoProno() {
         setRealScores(scoresMap);
       }
       if (Array.isArray(pr)) {
-        const predsMap = {};
-        pr.forEach(r => { predsMap[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
-        setPreds(predsMap);
+        const predsFromDb = {};
+        pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+        // Fusionne avec les preds en mémoire — ne pas écraser les saisies locales
+        setPreds(prev => ({ ...prev, ...predsFromDb }));
       }
     }, 15000);
     return () => clearInterval(interval);
@@ -614,12 +614,13 @@ export default function CocoProno() {
     if (isNaN(s1n) || isNaN(s2n)) return;
     const k = `${me.id}_${matchId}`;
     const val = { s1: s1n, s2: s2n };
-    const next = { ...preds, [k]: val };
-    setPreds(next);
+    // Mise à jour fonctionnelle pour éviter les closures stale
+    setPreds(prev => ({ ...prev, [k]: val }));
     if (storageMode.current === "supabase") {
       await sbUpsert("predictions", { player_id: me.id, match_id: matchId, score1: s1n, score2: s2n });
     } else {
-      await storageSave("cp_preds", next);
+      // En mode storage : on re-lit preds depuis le state pour avoir la version à jour
+      await storageSave("cp_preds", { ...preds, [k]: val });
     }
   };
 
@@ -1468,7 +1469,18 @@ export default function CocoProno() {
   );
 
   // ─── RANKING ─────────────────────────────────────
-  if (view === "ranking") return pageWrap(
+  // Rechargement des pronos depuis Supabase quand on ouvre le classement
+  useEffect(() => {
+    if (view !== "ranking" || storageMode.current !== "supabase") return;
+    (async () => {
+      const pr = await sbSelect("predictions");
+      if (Array.isArray(pr)) {
+        const predsFromDb = {};
+        pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+        setPreds(prev => ({ ...prev, ...predsFromDb }));
+      }
+    })();
+  }, [view]);
     <>
       <div style={{ maxWidth:600, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:24 }}>
