@@ -1352,7 +1352,7 @@ export default function CocoProno() {
           <div style={{ fontSize:11, fontWeight:700, color: MUTED, textTransform:"uppercase", letterSpacing:2, marginBottom:14 }}>Système de points</div>
           {[
             [5,"green","🏆","Score exact","ex: 2-1 → 2-1"],
-            [4,"teal", "🎯","Bon résultat + même écart","ex: 2-0 → 3-0"],
+            [4,"teal", "🎯","Bon résultat + même écart","ex: 2-0 → 3-1"],
             [3,"blue", "⚡","Bon résultat + buts d'une équipe","ex: 2-1 → 2-0"],
             [2,"gold", "✔","Bon résultat seulement","ex: 0-1 → 1-4"],
             [0,"red",  "❌","Mauvais résultat",""],
