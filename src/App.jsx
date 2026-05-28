@@ -380,6 +380,7 @@ export default function CocoProno() {
 
   // ─── Détection du mode de stockage ───────────────────
   const storageMode = useRef("storage"); // "supabase" | "storage"
+  const [sbMode, setSbMode] = useState("storage"); // pour affichage UI
 
   const storageSave = async (k, v) => { try { await window.storage.set(k, JSON.stringify(v)); } catch {} };
 
@@ -400,6 +401,7 @@ export default function CocoProno() {
 
         if (Array.isArray(pl)) {
           storageMode.current = "supabase";
+          setSbMode("supabase");
           const playersList = pl || [];
           const predsMap = {};
           (pr || []).forEach(r => { predsMap[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
@@ -549,35 +551,69 @@ export default function CocoProno() {
     }
   };
 
-  // Sauvegarde globale — pousse toutes les saisies en cours vers Supabase
+  // Sauvegarde globale — pousse toutes les saisies vers Supabase
   const saveAllPreds = async () => {
     if (!me) return;
     setSaveStatus("saving");
     try {
-      const pending = Object.entries(inlineInputs);
       let saved = 0;
-      for (const [midStr, { s1, s2 }] of pending) {
-        if (s1 === "" || s2 === "" || s1 === undefined || s2 === undefined) continue;
+      const allToSave = {};
+
+      // Collecte les saisies en cours depuis inlineInputs
+      for (const [midStr, local] of Object.entries(inlineInputs)) {
+        const mid = parseInt(midStr);
+        const s1 = local.s1 !== undefined ? local.s1 : (preds[`${me.id}_${mid}`]?.s1 ?? "");
+        const s2 = local.s2 !== undefined ? local.s2 : (preds[`${me.id}_${mid}`]?.s2 ?? "");
+        if (s1 === "" || s2 === "") continue;
         const s1n = parseInt(s1), s2n = parseInt(s2);
         if (isNaN(s1n) || isNaN(s2n)) continue;
-        const mid = parseInt(midStr);
-        const k = `${me.id}_${mid}`;
-        preds[k] = { s1: s1n, s2: s2n };
-        if (storageMode.current === "supabase") {
-          await sbUpsert("predictions", { player_id: me.id, match_id: mid, score1: s1n, score2: s2n });
+        allToSave[mid] = { s1: s1n, s2: s2n };
+      }
+
+      // Collecte aussi tous les pronos déjà en mémoire (sync complète)
+      Object.keys(preds).filter(k => k.startsWith(`${me.id}_`)).forEach(k => {
+        const mid = parseInt(k.split("_")[1]);
+        if (!allToSave[mid]) allToSave[mid] = preds[k];
+      });
+
+      // Pousse vers Supabase ou window.storage
+      if (storageMode.current === "supabase") {
+        for (const [midStr, { s1, s2 }] of Object.entries(allToSave)) {
+          const res = await sbUpsert("predictions", {
+            player_id: me.id,
+            match_id: parseInt(midStr),
+            score1: s1,
+            score2: s2,
+          });
+          if (!res.ok) {
+            const err = await res.text();
+            console.error("Supabase error:", err);
+            setSaveStatus("error");
+            setTimeout(() => setSaveStatus("idle"), 4000);
+            return;
+          }
+          saved++;
         }
-        saved++;
+      } else {
+        // Mode local
+        const newPreds = { ...preds };
+        Object.entries(allToSave).forEach(([mid, v]) => {
+          newPreds[`${me.id}_${mid}`] = v;
+        });
+        await storageSave("cp_preds", newPreds);
+        setPreds(newPreds);
+        saved = Object.keys(allToSave).length;
       }
-      // Aussi sauvegarder tous les pronos déjà en mémoire (sync forcée)
-      if (storageMode.current !== "supabase") {
-        await storageSave("cp_preds", preds);
-      }
-      setPreds({ ...preds });
+
+      // Met à jour le state local
+      const merged = { ...preds };
+      Object.entries(allToSave).forEach(([mid, v]) => { merged[`${me.id}_${mid}`] = v; });
+      setPreds(merged);
       setInlineInputs({});
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 3000);
     } catch(e) {
-      console.error(e);
+      console.error("saveAllPreds error:", e);
       setSaveStatus("error");
       setTimeout(() => setSaveStatus("idle"), 3000);
     }
@@ -1034,6 +1070,14 @@ export default function CocoProno() {
               {/* ── Bouton Valider mes pronos ── */}
               {filtered.length > 0 && (
                 <div style={{ position:"sticky", bottom:16, marginTop:16, zIndex:40 }}>
+                  {/* Indicateur de connexion */}
+                  <div style={{ textAlign:"center", marginBottom:6 }}>
+                    <span style={{ fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20,
+                      background: sbMode==="supabase" ? "rgba(21,128,61,0.85)" : "rgba(180,83,9,0.85)",
+                      color:"#fff" }}>
+                      {sbMode === "supabase" ? "🟢 Connecté à Supabase" : "🟡 Mode local (non connecté à Supabase)"}
+                    </span>
+                  </div>
                   <button
                     onClick={saveAllPreds}
                     disabled={saveStatus === "saving"}
@@ -1048,14 +1092,12 @@ export default function CocoProno() {
                         ? "linear-gradient(135deg,#dc2626,#b91c1c)"
                         : "linear-gradient(135deg,#15803d,#0d9488)",
                       color:"#fff",
-                      boxShadow: saveStatus === "saving"
-                        ? "none"
-                        : "0 4px 20px rgba(0,0,0,0.35)",
+                      boxShadow: saveStatus === "saving" ? "none" : "0 4px 20px rgba(0,0,0,0.35)",
                       opacity: saveStatus === "saving" ? 0.75 : 1,
                     }}>
                     {saveStatus === "saving" && "⏳ Sauvegarde en cours…"}
                     {saveStatus === "saved"  && "✅ Pronostics sauvegardés !"}
-                    {saveStatus === "error"  && "❌ Erreur — réessaie"}
+                    {saveStatus === "error"  && "❌ Erreur Supabase — vérifie ta connexion"}
                     {saveStatus === "idle"   && "💾 Valider mes pronostics"}
                   </button>
                 </div>
