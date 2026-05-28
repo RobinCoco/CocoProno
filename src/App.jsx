@@ -1484,6 +1484,8 @@ export default function CocoProno() {
       }
     })();
   }, [view]);
+
+  if (view === "ranking") return pageWrap(
     <>
       <div style={{ maxWidth:600, margin:"0 auto" }}>
         <div style={{ textAlign:"center", marginBottom:24 }}>
