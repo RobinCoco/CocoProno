@@ -746,13 +746,32 @@ export default function CocoProno() {
     }
   };
 
+  // ─── Preds effectifs : fusionne preds (BDD) + inlineInputs (saisie en cours) ──
+  // Garantit que les saisies non encore sauvegardées comptent quand même dans le classement
+  const effectivePreds = (() => {
+    const merged = { ...preds };
+    if (me) {
+      Object.entries(inlineInputs).forEach(([matchId, local]) => {
+        const s1 = local.s1 !== undefined ? local.s1 : "";
+        const s2 = local.s2 !== undefined ? local.s2 : "";
+        if (s1 !== "" && s2 !== "") {
+          const s1n = parseInt(s1), s2n = parseInt(s2);
+          if (!isNaN(s1n) && !isNaN(s2n)) {
+            merged[`${me.id}_${matchId}`] = { s1: s1n, s2: s2n };
+          }
+        }
+      });
+    }
+    return merged;
+  })();
+
   const humanPlayers = [...players].filter(p => p.id !== "cocoprono-ia").map(p => {
     let pts = 0, exact = 0, ecart = 0, partial = 0, correct = 0;
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
-      const pred = preds[`${p.id}_${m.id}`];
+      const pred = effectivePreds[`${p.id}_${m.id}`];
       const real = realScores[m.id];
       const n = calcPts(pred, real);
-      if (n !== null) { pts += n; if(n===5) exact++; else if(n===3) ecart++; else if(n===2) partial++; else if(n===1) correct++; }
+      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n===2) correct++; }
     });
     return { ...p, pts, exact, ecart, partial, correct };
   });
@@ -763,17 +782,17 @@ export default function CocoProno() {
     const iaId = realIaPlayer ? "cocoprono-ia" : "__ai__";
     let pts = 0, exact = 0, ecart = 0, partial = 0, correct = 0;
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
-      const pred = preds[`${iaId}_${m.id}`] || (iaId === "__ai__" ? AI_PREDS[m.id] : null);
+      const pred = effectivePreds[`${iaId}_${m.id}`] || (iaId === "__ai__" ? AI_PREDS[m.id] : null);
       const real = realScores[m.id];
       const n = calcPts(pred, real);
-      if (n !== null) { pts += n; if(n===5) exact++; else if(n===3) ecart++; else if(n===2) partial++; else if(n===1) correct++; }
+      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n===2) correct++; }
     });
     return { id: iaId, name:"CocoProno IA", avatar:"🦜", isAI:true, pts, exact, ecart, partial, correct };
   })();
 
   const leaderboard = [...humanPlayers, aiEntry].sort((a,b) => b.pts - a.pts || b.exact - a.exact || b.ecart - a.ecart);
 
-  const myPred = (m) => preds[me ? `${me.id}_${m.id}` : null];
+  const myPred = (m) => effectivePreds[me ? `${me.id}_${m.id}` : null];
   const myPts  = (m) => calcPts(myPred(m), realScores[m.id]);
 
   // ─── Calcul automatique des qualifiés ─────────────────
@@ -1606,7 +1625,18 @@ export default function CocoProno() {
           <div>
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
               <div style={{ fontSize:18, fontWeight:900, color:"#fbbf24" }}>⚙ Admin</div>
-              <button style={{ ...btnS("ghost"), border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.7)" }} onClick={()=>setAdminOk(false)}>Fermer</button>
+              <div style={{ display:"flex", gap:8 }}>
+                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.6)", padding:"6px 10px" }}
+                  onClick={async () => {
+                    const pr = await sbSelect("predictions");
+                    if (Array.isArray(pr)) {
+                      const predsMap = {};
+                      pr.forEach(r => { predsMap[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+                      setPreds(predsMap);
+                    }
+                  }}>🔄 Recharger pronos</button>
+                <button style={{ ...btnS("ghost"), border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.7)" }} onClick={()=>setAdminOk(false)}>Fermer</button>
+              </div>
             </div>
 
             {/* Tabs */}
