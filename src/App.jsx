@@ -327,6 +327,7 @@ export default function CocoProno() {
   const [inlineInputs, setInlineInputs] = useState({});  // { matchId: { s1, s2 } }
   const [editReal, setEditReal] = useState(null);
   const [now, setNow] = useState(new Date());
+  const [saveStatus, setSaveStatus] = useState("idle"); // "idle"|"saving"|"saved"|"error"
 
   // Mise à jour toutes les minutes pour activer le verrouillage en temps réel
   useEffect(() => {
@@ -545,6 +546,40 @@ export default function CocoProno() {
       await sbUpsert("predictions", { player_id: me.id, match_id: matchId, score1: s1n, score2: s2n });
     } else {
       await storageSave("cp_preds", next);
+    }
+  };
+
+  // Sauvegarde globale — pousse toutes les saisies en cours vers Supabase
+  const saveAllPreds = async () => {
+    if (!me) return;
+    setSaveStatus("saving");
+    try {
+      const pending = Object.entries(inlineInputs);
+      let saved = 0;
+      for (const [midStr, { s1, s2 }] of pending) {
+        if (s1 === "" || s2 === "" || s1 === undefined || s2 === undefined) continue;
+        const s1n = parseInt(s1), s2n = parseInt(s2);
+        if (isNaN(s1n) || isNaN(s2n)) continue;
+        const mid = parseInt(midStr);
+        const k = `${me.id}_${mid}`;
+        preds[k] = { s1: s1n, s2: s2n };
+        if (storageMode.current === "supabase") {
+          await sbUpsert("predictions", { player_id: me.id, match_id: mid, score1: s1n, score2: s2n });
+        }
+        saved++;
+      }
+      // Aussi sauvegarder tous les pronos déjà en mémoire (sync forcée)
+      if (storageMode.current !== "supabase") {
+        await storageSave("cp_preds", preds);
+      }
+      setPreds({ ...preds });
+      setInlineInputs({});
+      setSaveStatus("saved");
+      setTimeout(() => setSaveStatus("idle"), 3000);
+    } catch(e) {
+      console.error(e);
+      setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 3000);
     }
   };
 
@@ -995,6 +1030,36 @@ export default function CocoProno() {
             return <>
               {filtered.map(m => renderMatch(m))}
               {filtered.length === 0 && <div style={{ textAlign:"center", padding:"40px 0", color:"rgba(255,255,255,0.7)" }}>Aucun match pour ces filtres</div>}
+
+              {/* ── Bouton Valider mes pronos ── */}
+              {filtered.length > 0 && (
+                <div style={{ position:"sticky", bottom:16, marginTop:16, zIndex:40 }}>
+                  <button
+                    onClick={saveAllPreds}
+                    disabled={saveStatus === "saving"}
+                    style={{
+                      width:"100%", padding:"16px", borderRadius:16, border:"none",
+                      cursor: saveStatus === "saving" ? "wait" : "pointer",
+                      fontWeight:900, fontSize:16, letterSpacing:0.3,
+                      transition:"all 0.2s",
+                      background: saveStatus === "saved"
+                        ? "linear-gradient(135deg,#15803d,#166534)"
+                        : saveStatus === "error"
+                        ? "linear-gradient(135deg,#dc2626,#b91c1c)"
+                        : "linear-gradient(135deg,#15803d,#0d9488)",
+                      color:"#fff",
+                      boxShadow: saveStatus === "saving"
+                        ? "none"
+                        : "0 4px 20px rgba(0,0,0,0.35)",
+                      opacity: saveStatus === "saving" ? 0.75 : 1,
+                    }}>
+                    {saveStatus === "saving" && "⏳ Sauvegarde en cours…"}
+                    {saveStatus === "saved"  && "✅ Pronostics sauvegardés !"}
+                    {saveStatus === "error"  && "❌ Erreur — réessaie"}
+                    {saveStatus === "idle"   && "💾 Valider mes pronostics"}
+                  </button>
+                </div>
+              )}
             </>;
           }
 
