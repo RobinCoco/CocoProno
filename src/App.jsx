@@ -691,6 +691,35 @@ export default function CocoProno() {
     }
   };
 
+  const SIM_SCORES = {1:{s1:0,s2:1},2:{s1:0,s2:0},3:{s1:1,s2:1},4:{s1:0,s2:1},5:{s1:0,s2:2},6:{s1:0,s2:0},7:{s1:2,s2:6},8:{s1:0,s2:0},9:{s1:1,s2:0},10:{s1:1,s2:0},11:{s1:0,s2:0},12:{s1:0,s2:0},13:{s1:0,s2:0},14:{s1:0,s2:0},15:{s1:0,s2:0},16:{s1:1,s2:0},17:{s1:3,s2:0},18:{s1:3,s2:3},19:{s1:1,s2:0},20:{s1:0,s2:2},21:{s1:0,s2:0},22:{s1:0,s2:0},23:{s1:0,s2:0},24:{s1:1,s2:1},25:{s1:0,s2:2},26:{s1:1,s2:0},27:{s1:4,s2:2},28:{s1:0,s2:0},29:{s1:0,s2:0},30:{s1:0,s2:1},31:{s1:0,s2:1},32:{s1:1,s2:1},33:{s1:0,s2:1},34:{s1:2,s2:0},35:{s1:3,s2:2},36:{s1:1,s2:2},37:{s1:0,s2:0},38:{s1:0,s2:0},39:{s1:0,s2:0},40:{s1:0,s2:0},41:{s1:0,s2:0},42:{s1:2,s2:0},43:{s1:0,s2:0},44:{s1:0,s2:0},45:{s1:1,s2:1},46:{s1:0,s2:1},47:{s1:1,s2:1},48:{s1:0,s2:2},49:{s1:0,s2:0},50:{s1:0,s2:0},51:{s1:1,s2:0},52:{s1:1,s2:1},53:{s1:0,s2:3},54:{s1:0,s2:1},55:{s1:6,s2:0},56:{s1:0,s2:0},57:{s1:0,s2:1},58:{s1:0,s2:0},59:{s1:3,s2:0},60:{s1:1,s2:0},61:{s1:0,s2:1},62:{s1:0,s2:0},63:{s1:2,s2:0},64:{s1:0,s2:0},65:{s1:4,s2:0},66:{s1:1,s2:0},67:{s1:0,s2:0},68:{s1:1,s2:2},69:{s1:0,s2:3},70:{s1:0,s2:0},71:{s1:5,s2:1},72:{s1:0,s2:2}};
+
+  const simulateScores = async () => {
+    if (!window.confirm("Injecter 72 scores simulés pour tester ? (Remplace les scores existants)")) return;
+    const newScores = { ...realScores, ...SIM_SCORES };
+    setRealScores(newScores);
+    if (storageMode.current === "supabase") {
+      for (const [mid, sc] of Object.entries(SIM_SCORES)) {
+        await sbUpsert("real_scores", { match_id: parseInt(mid), score1: sc.s1, score2: sc.s2 });
+      }
+    } else {
+      await storageSave("cp_scores", newScores);
+    }
+  };
+
+  const resetGroupScores = async () => {
+    if (!window.confirm("Effacer tous les scores réels des groupes ?")) return;
+    const newScores = { ...realScores };
+    ALL_MATCHES.forEach(m => delete newScores[m.id]);
+    setRealScores(newScores);
+    if (storageMode.current === "supabase") {
+      for (const m of ALL_MATCHES) {
+        await fetch(`${SB_URL}/real_scores?match_id=eq.${m.id}`, { method:"DELETE", headers:sbH() });
+      }
+    } else {
+      await storageSave("cp_scores", newScores);
+    }
+  };
+
   const openReal = (m) => {
     const r = realScores[m.id];
     setRInput(r ? { s1:r.s1, s2:r.s2 } : { s1:0, s2:0 });
@@ -1568,11 +1597,17 @@ export default function CocoProno() {
 
             {/* ── TAB SCORES ── */}
             {adminTab === "scores" && <>
-              <div style={{ display:"flex", gap:6, marginBottom:16, overflowX:"auto" }}>
-                {["all","1","2","3"].map(md=>(
-                  <button key={md} style={{ ...navBtnS(filterMD===md), flexShrink:0, fontSize:12, background: filterMD===md?"#15803d":"rgba(255,255,255,0.75)", color: filterMD===md?"#fff":TEXT }}
-                    onClick={()=>setFilterMD(md)}>{md==="all"?"Tous":"J"+md}</button>
-                ))}
+              <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
+                <div style={{ display:"flex", gap:6, flex:1 }}>
+                  {["all","1","2","3"].map(md=>(
+                    <button key={md} style={{ ...navBtnS(filterMD===md), flexShrink:0, fontSize:12, background: filterMD===md?"#15803d":"rgba(255,255,255,0.75)", color: filterMD===md?"#fff":TEXT }}
+                      onClick={()=>setFilterMD(md)}>{md==="all"?"Tous":"J"+md}</button>
+                  ))}
+                </div>
+                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(255,193,7,0.4)", color:"#fbbf24", padding:"6px 12px", flexShrink:0 }}
+                  onClick={simulateScores}>🧪 Simuler</button>
+                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(220,38,38,0.4)", color:"#f87171", padding:"6px 12px", flexShrink:0 }}
+                  onClick={resetGroupScores}>🗑 Reset</button>
               </div>
               {ALL_MATCHES.filter(m=>filterMD==="all"||m.md===+filterMD).map(m=>{
                 const real = realScores[m.id];
