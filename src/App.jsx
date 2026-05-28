@@ -143,17 +143,17 @@ function calcPts(pred, real) {
   const po = ps1 > ps2 ? 1 : ps1 < ps2 ? 2 : 0;
   const ro = rs1 > rs2 ? 1 : rs1 < rs2 ? 2 : 0;
   if (po !== ro) return 0;
-  if ((ps1 - ps2) === (rs1 - rs2)) return 3;
-  if (ps1 === rs1 || ps2 === rs2) return 2;
-  return 1;
+  if ((ps1 - ps2) === (rs1 - rs2)) return 4;
+  if (ps1 === rs1 || ps2 === rs2) return 3;
+  return 2;
 }
 
 function ptsMeta(pts) {
-  if (pts === 5) return { icon:"🏆", label:"Score exact",    color:"green", hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
-  if (pts === 3) return { icon:"🎯", label:"Bon écart",      color:"teal",  hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
-  if (pts === 2) return { icon:"⚡", label:"Buts partiels",  color:"blue",  hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
-  if (pts === 1) return { icon:"✔",  label:"Bon résultat",   color:"gold",  hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
-  if (pts === 0) return { icon:"❌", label:"Raté",            color:"red",   hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
+  if (pts === 5) return { icon:"🏆", label:"Score exact",       color:"green", hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
+  if (pts === 4) return { icon:"🎯", label:"Bon écart",         color:"teal",  hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
+  if (pts === 3) return { icon:"⚡", label:"Buts partiels",     color:"blue",  hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
+  if (pts === 2) return { icon:"✔",  label:"Bon résultat",      color:"gold",  hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
+  if (pts === 0) return { icon:"❌", label:"Raté",              color:"red",   hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
   return null;
 }
 
@@ -1241,9 +1241,9 @@ export default function CocoProno() {
           <div style={{ fontSize:11, fontWeight:700, color: MUTED, textTransform:"uppercase", letterSpacing:2, marginBottom:14 }}>Système de points</div>
           {[
             [5,"green","🏆","Score exact","ex: 2-1 → 2-1"],
-            [3,"teal", "🎯","Bon résultat + même écart","ex: 2-0 → 3-0"],
-            [2,"blue", "⚡","Bon résultat + buts d'une équipe","ex: 2-1 → 2-0"],
-            [1,"gold", "✔","Bon résultat seulement","ex: 0-1 → 1-4"],
+            [4,"teal", "🎯","Bon résultat + même écart","ex: 2-0 → 3-0"],
+            [3,"blue", "⚡","Bon résultat + buts d'une équipe","ex: 2-1 → 2-0"],
+            [2,"gold", "✔","Bon résultat seulement","ex: 0-1 → 1-4"],
             [0,"red",  "❌","Mauvais résultat",""],
           ].map(([pts,col,icon,label,ex])=>{
             const meta = ptsMeta(pts);
