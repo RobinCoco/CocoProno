@@ -350,6 +350,10 @@ export default function CocoProno() {
   const [adminOk, setAdminOk] = useState(false);
   const [adminErr, setAdminErr] = useState(false);
   const [adminTab, setAdminTab] = useState("scores");
+
+  // ─── Email(s) admin — modifie avec ta propre adresse ──────────────────────
+  const ADMIN_EMAILS = ["robinlb@live.fr"]; // ← mets ton email ici
+  const isAdmin = me && ADMIN_EMAILS.includes(me.email?.toLowerCase());
   const [iaStatus, setIaStatus] = useState("idle"); // "idle"|"loading"|"done"|"error"
   const [parrotSrc, setParrotSrc] = useState(PARROT_IMG);
   const ADMIN_CODE = "coupe2026";
@@ -735,7 +739,7 @@ export default function CocoProno() {
             <div style={{ display:"flex", gap:4 }}>
               <button style={navBtnS(view==="matches")} onClick={()=>setView("matches")}>Matchs</button>
               <button style={navBtnS(view==="ranking")} onClick={()=>setView("ranking")}>🏆</button>
-              <button style={navBtnS(view==="admin")} onClick={()=>setView("admin")}>⚙</button>
+              {isAdmin && <button style={navBtnS(view==="admin")} onClick={()=>setView("admin")}>⚙</button>}
             </div>
             <button style={{ fontSize:10, color:"rgba(255,255,255,0.4)", background:"none", border:"none", cursor:"pointer", padding:0, maxWidth:80, textAlign:"right", lineHeight:1.3 }} onClick={logout}>Changer</button>
           </>}
@@ -1374,6 +1378,18 @@ export default function CocoProno() {
   );
 
   // ─── ADMIN ───────────────────────────────────────
+  // Blocage admin pour les non-admins
+  if (view === "admin" && !isAdmin) {
+    return pageWrap(
+      <div style={{ textAlign:"center", padding:"60px 20px" }}>
+        <div style={{ fontSize:48, marginBottom:12 }}>🚫</div>
+        <div style={{ fontSize:18, fontWeight:800, color:"#fff", marginBottom:8 }}>Accès non autorisé</div>
+        <div style={{ fontSize:14, color:"rgba(255,255,255,0.6)", marginBottom:24 }}>Tu n'as pas accès à cette page.</div>
+        <button style={{ ...btnS("primary") }} onClick={() => setView("matches")}>Retour aux matchs</button>
+      </div>
+    );
+  }
+
   return pageWrap(
     <>
       <div style={{ maxWidth:600, margin:"0 auto" }}>
