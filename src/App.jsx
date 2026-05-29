@@ -422,11 +422,13 @@ export default function CocoProno() {
   const [adminErr, setAdminErr] = useState(false);
   const [adminTab, setAdminTab] = useState("scores");
 
-  // ─── Email(s) admin — modifie avec ta propre adresse ──────────────────────
-  const ADMIN_EMAILS = ["robinlb@live.fr"]; // ← mets ton email ici
+  // ─── Email(s) admin ──────────────────────────────
+  const ADMIN_EMAILS = ["robinlb@live.fr"];
   const isAdmin = me && ADMIN_EMAILS.includes(me.email?.toLowerCase());
-  const [iaStatus, setIaStatus] = useState("idle"); // "idle"|"loading"|"done"|"error"
+  const [iaStatus, setIaStatus] = useState("idle");
   const [parrotSrc, setParrotSrc] = useState(PARROT_IMG);
+  const [rankPage, setRankPage] = useState(0);
+  const RANK_PAGE_SIZE = 10;
   const ADMIN_CODE = "coupe2026";
 
   // Remove pure black background from parrot via canvas pixel manipulation
@@ -1533,51 +1535,104 @@ export default function CocoProno() {
           </div>
         )}
 
-        {leaderboard.map((p,i) => (
-          <div key={p.id} style={{
-            display:"flex", alignItems:"center", gap:12, padding:"16px 18px", marginBottom:8, borderRadius:16,
-            ...(p.isAI ? {
-              background:"linear-gradient(135deg, #fbbf24, #f59e0b)",
-              border:"2px solid #f59e0b",
-              boxShadow:"0 4px 24px rgba(251,191,36,0.5)",
-            } : {
-              ...card,
-              borderLeft: me?.id===p.id ? "4px solid #15803d" : "4px solid transparent",
-            }),
-          }}>
-            <div style={{ width:30, fontWeight:900, fontSize:15, color: p.isAI ? "#78350f" : i===0?"#f0b429":i===1?"#9ba8b0":i===2?"#cd7f32":MUTED, textAlign:"center" }}>{medalEmoji(i)||`#${i+1}`}</div>
+        {/* ── Liste paginée ── */}
+        {(() => {
+          const myRankIdx = leaderboard.findIndex(p => p.id === me?.id);
+          const myPage = myRankIdx >= 0 ? Math.floor(myRankIdx / RANK_PAGE_SIZE) : 0;
+          const activePage = rankPage === 0 && myPage > 0 ? myPage : rankPage;
+          const totalPages = Math.ceil(leaderboard.length / RANK_PAGE_SIZE);
+          const pageStart = activePage * RANK_PAGE_SIZE;
+          const pageItems = leaderboard.slice(pageStart, pageStart + RANK_PAGE_SIZE);
+          const meOnThisPage = myRankIdx >= pageStart && myRankIdx < pageStart + RANK_PAGE_SIZE;
 
-            <div style={{
-              width: p.isAI ? 46 : 38, height: p.isAI ? 46 : 38, borderRadius:"50%", flexShrink:0,
-              background: p.isAI ? "rgba(0,0,0,0.15)" : "linear-gradient(135deg,#fbbf24,#f59e0b)",
-              display:"flex", alignItems:"center", justifyContent:"center",
-              fontSize: p.isAI ? 26 : 15, fontWeight:900, color: p.isAI ? "#fff" : "#0f2d12",
-              border: p.isAI ? "2px solid rgba(255,255,255,0.4)" : "none",
-            }}>{p.avatar}</div>
-
-            <div style={{ flex:1 }}>
-              <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                <span style={{ fontWeight:900, fontSize: p.isAI ? 18 : 15, color: p.isAI ? "#1c0a00" : TEXT }}>
-                  {p.name}
-                </span>
-                {p.isAI && <span style={{ fontSize:11, fontWeight:800, color:"#f59e0b", background:"#1c0a00", padding:"2px 8px", borderRadius:10 }}>IA 🤖</span>}
-                {!p.isAI && me?.id===p.id && <span style={{ fontSize:11, color: G }}>(moi)</span>}
+          return <>
+            {/* Indicateur position */}
+            {myRankIdx >= 0 && (
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:12 }}>
+                <div style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>{leaderboard.length} participant{leaderboard.length>1?"s":""}</div>
+                <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>Ta position :</span>
+                  <span style={{ fontSize:13, fontWeight:900, color:"#fbbf24", background:"rgba(251,191,36,0.15)", padding:"2px 10px", borderRadius:20 }}>
+                    #{myRankIdx+1} / {leaderboard.length}
+                  </span>
+                  {!meOnThisPage && (
+                    <button onClick={()=>setRankPage(myPage)}
+                      style={{ fontSize:11, color:G, background:"rgba(21,128,61,0.15)", border:"1px solid rgba(21,128,61,0.3)", borderRadius:20, padding:"3px 10px", cursor:"pointer" }}>
+                      Me voir →
+                    </button>
+                  )}
+                </div>
               </div>
-              <div style={{ fontSize:12, marginTop:3, color: p.isAI ? "#78350f" : MUTED }}>
-                🏆{p.exact} · 🎯{p.ecart} · ⚡{p.partial} · ✔{p.correct}
+            )}
+
+            {/* Lignes */}
+            {pageItems.map((p, i) => {
+              const gi = pageStart + i;
+              const isMe = p.id === me?.id;
+              return (
+                <div key={p.id} style={{
+                  display:"flex", alignItems:"center", gap:12, padding:"14px 18px", marginBottom:8, borderRadius:16,
+                  ...(p.isAI ? {
+                    background:"linear-gradient(135deg,#fbbf24,#f59e0b)",
+                    border:"2px solid #f59e0b",
+                    boxShadow:"0 4px 24px rgba(251,191,36,0.5)",
+                  } : {
+                    ...card,
+                    borderLeft: isMe ? "4px solid #15803d" : "4px solid transparent",
+                    boxShadow: isMe ? "0 0 0 1px rgba(21,128,61,0.3)" : "none",
+                  }),
+                }}>
+                  <div style={{ width:30, fontWeight:900, fontSize:15, textAlign:"center", color:p.isAI?"#78350f":gi===0?"#f0b429":gi===1?"#9ba8b0":gi===2?"#cd7f32":MUTED }}>{medalEmoji(gi)||`#${gi+1}`}</div>
+                  <div style={{ width:p.isAI?46:38, height:p.isAI?46:38, borderRadius:"50%", flexShrink:0, background:p.isAI?"rgba(0,0,0,0.15)":"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:p.isAI?26:15, fontWeight:900, color:p.isAI?"#fff":"#0f2d12", border:p.isAI?"2px solid rgba(255,255,255,0.4)":"none" }}>{p.avatar}</div>
+                  <div style={{ flex:1 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                      <span style={{ fontWeight:900, fontSize:p.isAI?18:15, color:p.isAI?"#1c0a00":TEXT }}>{p.name}</span>
+                      {p.isAI && <span style={{ fontSize:11, fontWeight:800, color:"#f59e0b", background:"#1c0a00", padding:"2px 8px", borderRadius:10 }}>IA 🤖</span>}
+                      {isMe && !p.isAI && <span style={{ fontSize:11, color:G, fontWeight:700 }}>(moi)</span>}
+                    </div>
+                    <div style={{ fontSize:12, marginTop:2, color:p.isAI?"#78350f":MUTED }}>🏆{p.exact} · 🎯{p.ecart} · ⚡{p.partial} · ✔{p.correct}</div>
+                  </div>
+                  <div style={{ textAlign:"right" }}>
+                    <div style={{ fontSize:p.isAI?28:22, fontWeight:900, color:p.isAI?"#1c0a00":G }}>{p.pts}</div>
+                    <div style={{ fontSize:10, color:p.isAI?"#78350f":MUTED }}>pts</div>
+                  </div>
+                </div>
+              );
+            })}
+
+            {leaderboard.length === 0 && <div style={{ textAlign:"center", padding:"40px", color:"rgba(255,255,255,0.7)" }}>Aucun joueur pour l'instant</div>}
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:6, marginTop:16, flexWrap:"wrap" }}>
+                <button onClick={()=>setRankPage(p=>Math.max(0,p-1))} disabled={activePage===0}
+                  style={{ ...btnS("ghost"), padding:"8px 14px", fontSize:13, border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.7)", opacity:activePage===0?0.4:1 }}>← Préc.</button>
+                {Array.from({length:totalPages},(_,i)=>(
+                  <button key={i} onClick={()=>setRankPage(i)}
+                    style={{ width:34, height:34, borderRadius:8, border:"none", cursor:"pointer", fontSize:13, fontWeight:700, background:activePage===i?"#15803d":"rgba(255,255,255,0.15)", color:activePage===i?"#fff":"rgba(255,255,255,0.6)" }}>
+                    {i+1}
+                  </button>
+                ))}
+                <button onClick={()=>setRankPage(p=>Math.min(totalPages-1,p+1))} disabled={activePage===totalPages-1}
+                  style={{ ...btnS("ghost"), padding:"8px 14px", fontSize:13, border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.7)", opacity:activePage===totalPages-1?0.4:1 }}>Suiv. →</button>
               </div>
-            </div>
+            )}
 
-            <div style={{ textAlign:"right" }}>
-              <div style={{ fontSize: p.isAI ? 28 : 22, fontWeight:900, color: p.isAI ? "#1c0a00" : G }}>{p.pts}</div>
-              <div style={{ fontSize:10, color: p.isAI ? "#78350f" : MUTED }}>pts</div>
-            </div>
-          </div>
-        ))}
-
-        {leaderboard.length === 0 && (
-          <div style={{ textAlign:"center", padding:"40px", color:"rgba(255,255,255,0.7)" }}>Aucun joueur pour l'instant</div>
-        )}
+            {/* Bandeau sticky si joueur pas sur cette page */}
+            {myRankIdx >= 0 && !meOnThisPage && (() => {
+              const me_e = leaderboard[myRankIdx];
+              return (
+                <div style={{ position:"sticky", bottom:70, marginTop:12, background:"rgba(8,35,12,0.95)", backdropFilter:"blur(8px)", borderRadius:12, padding:"10px 14px", border:"1.5px solid rgba(21,128,61,0.4)", display:"flex", alignItems:"center", gap:10 }}>
+                  <span style={{ fontSize:13, fontWeight:900, color:"#fbbf24" }}>#{myRankIdx+1}</span>
+                  <div style={{ width:28, height:28, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:12, fontWeight:900, color:"#0f2d12" }}>{me_e.avatar}</div>
+                  <span style={{ fontWeight:700, color:"#fff", flex:1, fontSize:13 }}>{me_e.name} <span style={{ color:G }}>(moi)</span></span>
+                  <span style={{ fontWeight:900, color:G, fontSize:18 }}>{me_e.pts} pts</span>
+                  <button onClick={()=>setRankPage(myPage)} style={{ fontSize:11, color:"#fff", background:"#15803d", border:"none", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}>Voir →</button>
+                </div>
+              );
+            })()}
+          </>;
+        })()}
 
         <div style={{ ...card, padding:"18px 20px", marginTop:16 }}>
           <div style={{ fontSize:11, fontWeight:700, color: MUTED, textTransform:"uppercase", letterSpacing:2, marginBottom:14 }}>Système de points</div>
