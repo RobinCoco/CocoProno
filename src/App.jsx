@@ -11,13 +11,21 @@ const sbH = () => ({
 
 const sbSelect = async (table, qs = "") => {
   try {
-    const r = await fetch(
-      `${SB_URL}/${table}?select=*${qs}&limit=10000`,
-      { headers: sbH() }
-    );
-    if (!r.ok) { console.warn(`sbSelect ${table} ${r.status}`); return []; }
-    const data = await r.json();
-    return Array.isArray(data) ? data : [];
+    const PAGE = 1000;
+    let all = [], from = 0;
+    while (true) {
+      const r = await fetch(
+        `${SB_URL}/${table}?select=*${qs}&limit=${PAGE}&offset=${from}`,
+        { headers: { ...sbH(), "Range-Unit":"items", "Range":`${from}-${from+PAGE-1}` } }
+      );
+      if (!r.ok) { console.warn(`sbSelect ${table} ${r.status}`); break; }
+      const data = await r.json();
+      if (!Array.isArray(data) || data.length === 0) break;
+      all = all.concat(data);
+      if (data.length < PAGE) break; // dernière page
+      from += PAGE;
+    }
+    return all;
   } catch(e) {
     console.warn(`sbSelect ${table}:`, e.message);
     return [];
