@@ -1198,6 +1198,89 @@ export default function CocoProno() {
           ))}
         </div>
 
+        {/* ── Indicateur de complétion des pronos ── */}
+        {me && filterPhase === "groupes" && (() => {
+          const total = ALL_MATCHES.length; // 72
+          const filled = ALL_MATCHES.filter(m => {
+            const p = effectivePreds[`${me.id}_${m.id}`];
+            return p !== undefined && p.s1 !== undefined && p.s2 !== undefined;
+          }).length;
+          const locked = ALL_MATCHES.filter(m => isMatchLocked(m)).length;
+          const missing = total - filled;
+          const pct = Math.round((filled / total) * 100);
+          const allDone = missing === 0;
+
+          return (
+            <div style={{ marginBottom:14 }}>
+              {/* Barre de progression */}
+              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:6 }}>
+                <span style={{ fontSize:12, fontWeight:700, color:"rgba(255,255,255,0.8)" }}>
+                  Mes pronostics : <strong style={{ color: allDone ? "#4ade80" : "#fbbf24" }}>{filled}/{total}</strong>
+                </span>
+                <span style={{ fontSize:12, color:"rgba(255,255,255,0.5)" }}>{pct}%</span>
+              </div>
+              <div style={{ height:8, borderRadius:8, background:"rgba(255,255,255,0.15)", overflow:"hidden" }}>
+                <div style={{ height:"100%", borderRadius:8, width:`${pct}%`, transition:"width 0.4s",
+                  background: allDone
+                    ? "linear-gradient(90deg,#15803d,#4ade80)"
+                    : pct > 50
+                    ? "linear-gradient(90deg,#b45309,#fbbf24)"
+                    : "linear-gradient(90deg,#dc2626,#f87171)"
+                }}/>
+              </div>
+
+              {/* Message d'alerte si pronos manquants */}
+              {!allDone && (
+                <div style={{ marginTop:10, borderRadius:12, overflow:"hidden",
+                  border:`1.5px solid ${missing > 20 ? "rgba(220,38,38,0.5)" : "rgba(251,191,36,0.5)"}` }}>
+                  <div style={{ padding:"10px 14px", display:"flex", alignItems:"center", gap:10,
+                    background: missing > 20 ? "rgba(220,38,38,0.12)" : "rgba(251,191,36,0.12)" }}>
+                    <span style={{ fontSize:20 }}>{missing > 20 ? "🚨" : "⚠️"}</span>
+                    <div style={{ flex:1 }}>
+                      <div style={{ fontSize:13, fontWeight:800, color: missing > 20 ? "#f87171" : "#fbbf24" }}>
+                        {missing} pronostic{missing > 1 ? "s" : ""} manquant{missing > 1 ? "s" : ""} !
+                      </div>
+                      <div style={{ fontSize:11, color:"rgba(255,255,255,0.6)", marginTop:2 }}>
+                        {locked > 0
+                          ? `${locked} match${locked>1?"s":""} déjà verrouillé${locked>1?"s":""}. Remplis les ${missing - Math.max(0, ALL_MATCHES.filter(m=>isMatchLocked(m)&&!effectivePreds[`${me.id}_${m.id}`]).length)} restants avant le coup d'envoi !`
+                          : `Remplis-les avant le début des matchs — ils se verrouillent au coup d'envoi !`
+                        }
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => {
+                        // Filtre sur les matchs non remplis
+                        setFilterMD("all");
+                        setFilterG("all");
+                        // Scroll vers le premier match non rempli
+                        const firstEmpty = ALL_MATCHES.find(m => !effectivePreds[`${me.id}_${m.id}`] && !isMatchLocked(m));
+                        if (firstEmpty) {
+                          setTimeout(() => {
+                            const el = document.getElementById(`match-card-${firstEmpty.id}`);
+                            if (el) el.scrollIntoView({ behavior:"smooth", block:"center" });
+                          }, 100);
+                        }
+                      }}
+                      style={{ fontSize:11, fontWeight:800, color:"#fff",
+                        background: missing > 20 ? "#dc2626" : "#b45309",
+                        border:"none", borderRadius:20, padding:"6px 14px", cursor:"pointer", flexShrink:0 }}>
+                      Voir →
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Message succès si tout est rempli */}
+              {allDone && (
+                <div style={{ marginTop:8, borderRadius:10, padding:"8px 14px", background:"rgba(21,128,61,0.15)", border:"1px solid rgba(21,128,61,0.3)", display:"flex", alignItems:"center", gap:8 }}>
+                  <span style={{ fontSize:16 }}>✅</span>
+                  <span style={{ fontSize:12, fontWeight:700, color:"#4ade80" }}>Tous tes pronostics sont remplis — bonne chance ! 🦜</span>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
         {/* Filters groupes */}
         {filterPhase === "groupes" && <>
           <div style={{ display:"flex", gap:6, marginBottom:10, overflowX:"auto", paddingBottom:4 }}>
@@ -1279,7 +1362,7 @@ export default function CocoProno() {
                   onClick={e=>e.stopPropagation()} onChange={onCh} onBlur={onBl} onFocus={e=>e.target.select()} />;
 
             return (
-              <div key={m.id} style={{
+              <div key={m.id} id={`match-card-${m.id}`} style={{
                 ...card, marginBottom:10, padding:"14px 16px",
                 background: locked ? "rgba(235,235,235,0.82)" : previewMeta ? `rgba(255,255,255,${previewMeta.color==="red"?0.82:0.88})` : "rgba(255,255,255,0.88)",
                 borderLeft: locked ? "4px solid #bbb" : previewMeta ? `4px solid ${previewMeta.hex}` : "4px solid rgba(21,128,61,0.15)",
