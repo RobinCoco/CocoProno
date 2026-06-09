@@ -7,15 +7,15 @@ const sbH = () => ({
   "apikey": SB_KEY,
   "Authorization": `Bearer ${SB_KEY}`,
   "Content-Type": "application/json",
-  "Range-Unit": "items",
-  "Range": "0-9999", // Lève la limite de 1000 lignes par défaut
 });
 
 const sbSelect = async (table, qs = "") => {
-  const r = await fetch(`${SB_URL}/${table}?select=*${qs}&limit=10000`, {
-    headers: { ...sbH(), "Prefer": "count=none" }
-  });
-  return r.ok ? r.json() : [];
+  const r = await fetch(
+    `${SB_URL}/${table}?select=*${qs}&limit=10000&offset=0`,
+    { headers: { ...sbH(), "Prefer": "count=none" } }
+  );
+  if (!r.ok) { console.warn(`sbSelect ${table} error:`, r.status); return []; }
+  return r.json();
 };
 const sbInsert = async (table, data) => {
   const r = await fetch(`${SB_URL}/${table}`, { method:"POST", headers: sbH(), body: JSON.stringify(data) });
@@ -1147,6 +1147,27 @@ export default function CocoProno() {
             ))}
           </div>
         )}
+
+        {/* Indicateur connexion + bouton reload */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
+          <span style={{ fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20,
+            background: sbMode==="supabase" ? "rgba(21,128,61,0.85)" : "rgba(180,83,9,0.85)",
+            color:"#fff" }}>
+            {sbMode === "supabase" ? "🟢 Connecté" : "🟡 Mode local"}
+          </span>
+          <button style={{ fontSize:11, color:"rgba(255,255,255,0.6)", background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}
+            onClick={async () => {
+              if (storageMode.current !== "supabase") return;
+              const pr = await sbSelect("predictions");
+              if (Array.isArray(pr)) {
+                const predsFromDb = {};
+                pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+                setPreds(prev => ({ ...prev, ...predsFromDb }));
+              }
+            }}>
+            🔄 Recharger
+          </button>
+        </div>
 
         {/* Phase toggle */}
         <div style={{ display:"flex", gap:8, marginBottom:14 }}>
