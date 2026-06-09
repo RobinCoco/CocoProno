@@ -398,7 +398,8 @@ export default function CocoProno() {
   const [inlineInputs, setInlineInputs] = useState({});  // { matchId: { s1, s2 } }
   const [editReal, setEditReal] = useState(null);
   const [now, setNow] = useState(new Date());
-  const [saveStatus, setSaveStatus] = useState("idle"); // "idle"|"saving"|"saved"|"error"
+  const [saveStatus, setSaveStatus] = useState("idle");
+  const [matchSaveStatus, setMatchSaveStatus] = useState({}); // { [matchId]: "saving"|"saved"|"error" }
 
   // Mise à jour toutes les minutes pour activer le verrouillage en temps réel
   useEffect(() => {
@@ -462,8 +463,21 @@ export default function CocoProno() {
   const storageSave = async (k, v) => { try { await window.storage.set(k, JSON.stringify(v)); } catch {} };
 
   // Helper : timeout pour les requêtes réseau
-  const withTimeout = (promise, ms = 8000) =>
+  const withTimeout = (promise, ms = 15000) =>
     Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))]);
+
+  // Retry automatique sur les requêtes Supabase (3 tentatives)
+  const sbWithRetry = async (fn, retries = 3) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const res = await fn();
+        return res;
+      } catch(e) {
+        if (i === retries - 1) throw e;
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // 1s, 2s entre les essais
+      }
+    }
+  };
 
   // ─── Chargement initial ───────────────────────────────
   useEffect(() => {
@@ -627,20 +641,33 @@ export default function CocoProno() {
 
   const saveInlinePred = async (matchId, s1, s2) => {
     if (!me) return;
-    // Accepte une seule valeur — l'autre prend 0 par défaut
     const v1 = s1 !== undefined && s1 !== "" ? parseInt(s1) : null;
     const v2 = s2 !== undefined && s2 !== "" ? parseInt(s2) : null;
-    if (v1 === null && v2 === null) return; // rien saisi
+    if (v1 === null && v2 === null) return;
     const s1n = v1 !== null ? v1 : (predsRef.current[`${me.id}_${matchId}`]?.s1 ?? 0);
     const s2n = v2 !== null ? v2 : (predsRef.current[`${me.id}_${matchId}`]?.s2 ?? 0);
     if (isNaN(s1n) || isNaN(s2n)) return;
     const k = `${me.id}_${matchId}`;
     const val = { s1: s1n, s2: s2n };
     setPreds(prev => ({ ...prev, [k]: val }));
-    if (storageMode.current === "supabase") {
-      await sbUpsert("predictions", { player_id: me.id, match_id: matchId, score1: s1n, score2: s2n });
-    } else {
-      await storageSave("cp_preds", { ...predsRef.current, [k]: val });
+    setMatchSaveStatus(prev => ({ ...prev, [matchId]: "saving" }));
+    const clearStatus = (status) => {
+      setMatchSaveStatus(prev => ({ ...prev, [matchId]: status }));
+      setTimeout(() => setMatchSaveStatus(prev => { const n={...prev}; delete n[matchId]; return n; }), status === "saved" ? 2500 : 4000);
+    };
+    try {
+      if (storageMode.current === "supabase") {
+        await sbWithRetry(() =>
+          sbUpsert("predictions", { player_id: me.id, match_id: matchId, score1: s1n, score2: s2n })
+        );
+      } else {
+        await storageSave("cp_preds", { ...predsRef.current, [k]: val });
+      }
+      clearStatus("saved");
+    } catch(e) {
+      console.warn("saveInlinePred échoué:", e);
+      storageSave("cp_preds", { ...predsRef.current, [k]: val }).catch(() => {});
+      clearStatus("error");
     }
   };
 
@@ -649,68 +676,60 @@ export default function CocoProno() {
     if (!me) return;
     setSaveStatus("saving");
     try {
-      let saved = 0;
+      let saved = 0, failed = 0;
       const allToSave = {};
 
-      // Collecte les saisies en cours depuis inlineInputs
+      // Collecte inlineInputs (saisies en cours)
       for (const [midStr, local] of Object.entries(inlineInputs)) {
         const mid = parseInt(midStr);
-        const s1 = local.s1 !== undefined ? local.s1 : (preds[`${me.id}_${mid}`]?.s1 ?? "");
-        const s2 = local.s2 !== undefined ? local.s2 : (preds[`${me.id}_${mid}`]?.s2 ?? "");
-        if (s1 === "" || s2 === "") continue;
-        const s1n = parseInt(s1), s2n = parseInt(s2);
-        if (isNaN(s1n) || isNaN(s2n)) continue;
-        allToSave[mid] = { s1: s1n, s2: s2n };
+        const existing = predsRef.current[`${me.id}_${mid}`];
+        const s1 = local.s1 !== undefined && local.s1 !== "" ? parseInt(local.s1) : existing?.s1 ?? null;
+        const s2 = local.s2 !== undefined && local.s2 !== "" ? parseInt(local.s2) : existing?.s2 ?? null;
+        if (s1 !== null && s2 !== null && !isNaN(s1) && !isNaN(s2)) allToSave[mid] = { s1, s2 };
       }
-
-      // Collecte aussi tous les pronos déjà en mémoire (sync complète)
-      Object.keys(preds).filter(k => k.startsWith(`${me.id}_`)).forEach(k => {
+      // Collecte tous les pronos en mémoire (sync complète)
+      Object.keys(predsRef.current).filter(k => k.startsWith(`${me.id}_`)).forEach(k => {
         const mid = parseInt(k.split("_")[1]);
-        if (!allToSave[mid]) allToSave[mid] = preds[k];
+        if (!allToSave[mid]) allToSave[mid] = predsRef.current[k];
       });
 
-      // Pousse vers Supabase ou window.storage
       if (storageMode.current === "supabase") {
         for (const [midStr, { s1, s2 }] of Object.entries(allToSave)) {
-          const res = await sbUpsert("predictions", {
-            player_id: me.id,
-            match_id: parseInt(midStr),
-            score1: s1,
-            score2: s2,
-          });
-          if (!res.ok) {
-            const err = await res.text();
-            console.error("Supabase error:", err);
-            setSaveStatus("error");
-            setTimeout(() => setSaveStatus("idle"), 4000);
-            return;
+          try {
+            await sbWithRetry(() =>
+              sbUpsert("predictions", { player_id: me.id, match_id: parseInt(midStr), score1: s1, score2: s2 })
+            );
+            saved++;
+          } catch(e) {
+            console.warn(`Échec match ${midStr}:`, e.message);
+            failed++;
           }
-          saved++;
         }
+        // Backup local même en mode supabase
+        storageSave("cp_preds_backup", predsRef.current).catch(() => {});
       } else {
-        // Mode local — utilise predsRef pour avoir la version courante
         const newPreds = { ...predsRef.current };
-        Object.entries(allToSave).forEach(([mid, v]) => {
-          newPreds[`${me.id}_${mid}`] = v;
-        });
+        Object.entries(allToSave).forEach(([mid, v]) => { newPreds[`${me.id}_${mid}`] = v; });
         await storageSave("cp_preds", newPreds);
         setPreds(newPreds);
         saved = Object.keys(allToSave).length;
       }
 
-      // Met à jour le state local avec mise à jour fonctionnelle
       setPreds(prev => {
         const merged = { ...prev };
         Object.entries(allToSave).forEach(([mid, v]) => { merged[`${me.id}_${mid}`] = v; });
         return merged;
       });
       setInlineInputs({});
-      setSaveStatus("saved");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+
+      if (failed === 0) setSaveStatus("saved");
+      else if (saved > 0) setSaveStatus("partial");
+      else setSaveStatus("error");
+      setTimeout(() => setSaveStatus("idle"), 4000);
     } catch(e) {
-      console.error("saveAllPreds error:", e);
+      console.error("saveAllPreds:", e);
       setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      setTimeout(() => setSaveStatus("idle"), 4000);
     }
   };
 
@@ -1182,6 +1201,7 @@ export default function CocoProno() {
             const previewPts  = (v1!==""&&v2!==""&&real) ? calcPts({s1:parseInt(v1),s2:parseInt(v2)},real) : null;
             const previewMeta = previewPts !== null ? ptsMeta(previewPts) : meta;
             const locked = isMatchLocked(m);
+            const mss = matchSaveStatus[m.id]; // "saving"|"saved"|"error"|undefined
 
             const iStyle = {
               width:52, height:52, borderRadius:12,
@@ -1230,6 +1250,10 @@ export default function CocoProno() {
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                     {!locked && previewMeta && <span style={{ ...pill(previewMeta), fontSize:11 }}>{previewMeta.icon} +{previewPts??pts}pt{(previewPts??pts)>1?"s":""}</span>}
                     {locked && meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
+                    {/* Indicateur de sauvegarde */}
+                    {mss === "saving" && <span style={{ fontSize:10, color:"rgba(251,191,36,0.9)", fontWeight:700, display:"flex", alignItems:"center", gap:3 }}>⏳</span>}
+                    {mss === "saved"  && <span style={{ fontSize:10, color:"#4ade80", fontWeight:700 }}>✓ sauvegardé</span>}
+                    {mss === "error"  && <span style={{ fontSize:10, color:"#f87171", fontWeight:700 }}>⚠ erreur</span>}
                     <span style={{ fontSize:11, color:MUTED }}>{m.date}/2026</span>
                   </div>
                 </div>
@@ -1309,6 +1333,8 @@ export default function CocoProno() {
                       transition:"all 0.2s",
                       background: saveStatus === "saved"
                         ? "linear-gradient(135deg,#15803d,#166534)"
+                        : saveStatus === "partial"
+                        ? "linear-gradient(135deg,#b45309,#92400e)"
                         : saveStatus === "error"
                         ? "linear-gradient(135deg,#dc2626,#b91c1c)"
                         : "linear-gradient(135deg,#15803d,#0d9488)",
@@ -1316,10 +1342,11 @@ export default function CocoProno() {
                       boxShadow: saveStatus === "saving" ? "none" : "0 4px 20px rgba(0,0,0,0.35)",
                       opacity: saveStatus === "saving" ? 0.75 : 1,
                     }}>
-                    {saveStatus === "saving" && "⏳ Sauvegarde en cours…"}
-                    {saveStatus === "saved"  && "✅ Pronostics sauvegardés !"}
-                    {saveStatus === "error"  && "❌ Erreur Supabase — vérifie ta connexion"}
-                    {saveStatus === "idle"   && "💾 Valider mes pronostics"}
+                    {saveStatus === "saving"  && "⏳ Sauvegarde en cours…"}
+                    {saveStatus === "saved"   && "✅ Pronostics sauvegardés !"}
+                    {saveStatus === "partial" && "⚠️ Sauvegarde partielle — réessaie"}
+                    {saveStatus === "error"   && "❌ Erreur Supabase — vérifie ta connexion"}
+                    {saveStatus === "idle"    && "💾 Valider mes pronostics"}
                   </button>
                 </div>
               )}
