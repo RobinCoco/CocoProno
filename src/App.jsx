@@ -462,7 +462,7 @@ export default function CocoProno() {
   const storageSave = async (k, v) => { try { await window.storage.set(k, JSON.stringify(v)); } catch {} };
 
   // Helper : timeout pour les requêtes réseau
-  const withTimeout = (promise, ms = 3000) =>
+  const withTimeout = (promise, ms = 8000) =>
     Promise.race([promise, new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), ms))]);
 
   // ─── Chargement initial ───────────────────────────────
@@ -626,8 +626,13 @@ export default function CocoProno() {
   };
 
   const saveInlinePred = async (matchId, s1, s2) => {
-    if (s1 === "" || s2 === "" || !me) return;
-    const s1n = parseInt(s1); const s2n = parseInt(s2);
+    if (!me) return;
+    // Accepte une seule valeur — l'autre prend 0 par défaut
+    const v1 = s1 !== undefined && s1 !== "" ? parseInt(s1) : null;
+    const v2 = s2 !== undefined && s2 !== "" ? parseInt(s2) : null;
+    if (v1 === null && v2 === null) return; // rien saisi
+    const s1n = v1 !== null ? v1 : (predsRef.current[`${me.id}_${matchId}`]?.s1 ?? 0);
+    const s2n = v2 !== null ? v2 : (predsRef.current[`${me.id}_${matchId}`]?.s2 ?? 0);
     if (isNaN(s1n) || isNaN(s2n)) return;
     const k = `${me.id}_${matchId}`;
     const val = { s1: s1n, s2: s2n };
@@ -1236,7 +1241,7 @@ export default function CocoProno() {
                     <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t1.name}</div>
                     <ScoreBox v={v1}
                       onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s1:e.target.value}}))}
-                      onBl={e=>{const s2=inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):"");saveInlinePred(m.id,e.target.value,s2);}}
+                      onBl={e=>{saveInlinePred(m.id, e.target.value, inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):undefined));}}
                       otherV={v2} />
                   </div>
                   <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:6, minWidth:60 }}>
@@ -1254,7 +1259,7 @@ export default function CocoProno() {
                     <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t2.name}</div>
                     <ScoreBox v={v2}
                       onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s2:e.target.value}}))}
-                      onBl={e=>{const s1=inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):"");saveInlinePred(m.id,s1,e.target.value);}}
+                      onBl={e=>{saveInlinePred(m.id, inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):undefined), e.target.value);}}
                       otherV={v1} />
                   </div>
                 </div>
