@@ -3,10 +3,18 @@ import { useState, useEffect, useRef } from "react";
 // ─── Supabase REST helpers (pas de lib externe) ─────────
 const SB_URL = "https://rlbkpjxsskmkbinmiedc.supabase.co/rest/v1";
 const SB_KEY = "sb_publishable_kyPdCTAuQL4L6LF1gcse2A_J3nWIS8f";
-const sbH = () => ({ "apikey": SB_KEY, "Authorization": `Bearer ${SB_KEY}`, "Content-Type": "application/json" });
+const sbH = () => ({
+  "apikey": SB_KEY,
+  "Authorization": `Bearer ${SB_KEY}`,
+  "Content-Type": "application/json",
+  "Range-Unit": "items",
+  "Range": "0-9999", // Lève la limite de 1000 lignes par défaut
+});
 
 const sbSelect = async (table, qs = "") => {
-  const r = await fetch(`${SB_URL}/${table}?select=*${qs}`, { headers: sbH() });
+  const r = await fetch(`${SB_URL}/${table}?select=*${qs}&limit=10000`, {
+    headers: { ...sbH(), "Prefer": "count=none" }
+  });
   return r.ok ? r.json() : [];
 };
 const sbInsert = async (table, data) => {
@@ -483,12 +491,12 @@ export default function CocoProno() {
   useEffect(() => {
     (async () => {
       try {
-        // Tente Supabase avec timeout 3s
+        // Tente Supabase avec timeout 15s (connexions lentes)
         const [pl, pr, sc] = await withTimeout(Promise.all([
           sbSelect("players"),
           sbSelect("predictions"),
           sbSelect("real_scores"),
-        ]), 3000);
+        ]), 15000);
 
         if (Array.isArray(pl)) {
           storageMode.current = "supabase";
