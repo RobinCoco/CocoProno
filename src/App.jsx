@@ -450,7 +450,7 @@ export default function CocoProno() {
   const isAdmin = me && ADMIN_EMAILS.includes(me.email?.toLowerCase());
   const [iaStatus, setIaStatus] = useState("idle");
   const [parrotSrc, setParrotSrc] = useState(PARROT_IMG);
-  const [rankPage, setRankPage] = useState(0);
+  const [rankPage, setRankPage] = useState(-1); // -1 = auto (va sur la page du joueur)
   const RANK_PAGE_SIZE = 10;
   const ADMIN_CODE = "coupe2026";
 
@@ -583,6 +583,7 @@ export default function CocoProno() {
   // Rechargement des pronos depuis Supabase quand on ouvre le classement
   useEffect(() => {
     if (view !== "ranking" || storageMode.current !== "supabase") return;
+    setRankPage(-1); // reset pour atterrir sur la page du joueur
     (async () => {
       const pr = await sbSelect("predictions");
       if (Array.isArray(pr)) {
@@ -1703,7 +1704,8 @@ export default function CocoProno() {
         {(() => {
           const myRankIdx = leaderboard.findIndex(p => p.id === me?.id);
           const myPage = myRankIdx >= 0 ? Math.floor(myRankIdx / RANK_PAGE_SIZE) : 0;
-          const activePage = rankPage === 0 && myPage > 0 ? myPage : rankPage;
+          // -1 = jamais cliqué → aller sur la page du joueur automatiquement
+          const activePage = rankPage === -1 ? myPage : rankPage;
           const totalPages = Math.ceil(leaderboard.length / RANK_PAGE_SIZE);
           const pageStart = activePage * RANK_PAGE_SIZE;
           const pageItems = leaderboard.slice(pageStart, pageStart + RANK_PAGE_SIZE);
