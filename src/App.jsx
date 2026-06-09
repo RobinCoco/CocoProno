@@ -1155,15 +1155,27 @@ export default function CocoProno() {
             color:"#fff" }}>
             {sbMode === "supabase" ? "🟢 Connecté" : "🟡 Mode local"}
           </span>
-          <button style={{ fontSize:11, color:"rgba(255,255,255,0.6)", background:"rgba(255,255,255,0.1)", border:"1px solid rgba(255,255,255,0.15)", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}
+          <button style={{ fontSize:11, color:"rgba(255,255,255,0.8)", background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}
             onClick={async () => {
-              if (storageMode.current !== "supabase") return;
-              const pr = await sbSelect("predictions");
-              if (Array.isArray(pr)) {
-                const predsFromDb = {};
-                pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
-                setPreds(prev => ({ ...prev, ...predsFromDb }));
-              }
+              // Force reconnexion Supabase même si on était en mode local
+              try {
+                const [pl, pr, sc] = await Promise.all([
+                  sbSelect("players"),
+                  sbSelect("predictions"),
+                  sbSelect("real_scores"),
+                ]);
+                if (Array.isArray(pl)) {
+                  storageMode.current = "supabase";
+                  setSbMode("supabase");
+                  setPlayers(pl);
+                  const predsFromDb = {};
+                  (pr||[]).forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+                  setPreds(predsFromDb);
+                  const scoresMap = {};
+                  (sc||[]).forEach(r => { scoresMap[r.match_id] = { s1: r.score1, s2: r.score2 }; });
+                  setRealScores(scoresMap);
+                }
+              } catch(e) { console.warn("Reload failed:", e); }
             }}>
             🔄 Recharger
           </button>
@@ -1758,6 +1770,30 @@ export default function CocoProno() {
             <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:20 }}>
               <div style={{ fontSize:18, fontWeight:900, color:"#fbbf24" }}>⚙ Admin</div>
               <div style={{ display:"flex", gap:8 }}>
+                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(21,128,61,0.4)", color:"#4ade80", padding:"6px 12px" }}
+                  onClick={async () => {
+                    try {
+                      const [pl, pr, sc] = await Promise.all([
+                        sbSelect("players"),
+                        sbSelect("predictions"),
+                        sbSelect("real_scores"),
+                      ]);
+                      if (Array.isArray(pl)) {
+                        setPlayers(pl);
+                        const predsFromDb = {};
+                        (pr||[]).forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
+                        setPreds(predsFromDb);
+                        const scoresMap = {};
+                        (sc||[]).forEach(r => { scoresMap[r.match_id] = { s1: r.score1, s2: r.score2 }; });
+                        setRealScores(scoresMap);
+                        storageMode.current = "supabase";
+                        setSbMode("supabase");
+                        alert(`✅ Rechargé : ${pl.length} joueurs, ${(pr||[]).length} pronos`);
+                      }
+                    } catch(e) { alert("Erreur : " + e.message); }
+                  }}>
+                  🔄 Tout recharger depuis Supabase
+                </button>
                 <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.6)", padding:"6px 10px" }}
                   onClick={async () => {
                     const pr = await sbSelect("predictions");
@@ -1766,7 +1802,7 @@ export default function CocoProno() {
                       pr.forEach(r => { predsMap[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
                       setPreds(predsMap);
                     }
-                  }}>🔄 Recharger pronos</button>
+                  }}>🔄 Pronos</button>
                 <button style={{ ...btnS("ghost"), border:"1px solid rgba(255,255,255,0.2)", color:"rgba(255,255,255,0.7)" }} onClick={()=>setAdminOk(false)}>Fermer</button>
               </div>
             </div>
