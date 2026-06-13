@@ -471,9 +471,10 @@ export default function CocoProno() {
     if (!m.date || !m.time) return false;
     const [d, mo] = m.date.split("/").map(Number);
     const [h, mi] = m.time.split(":").map(Number);
-    // Pas de dayOffset — la date dans les données est la date réelle du match
-    const start = new Date(2026, mo - 1, d, h, mi);
-    return now >= start;
+    // Horaires en CEST (UTC+2). Calcul en UTC pour éviter tout problème de fuseau.
+    // h-2 peut être négatif → JS normalise automatiquement (ex: -2h = veille 22h UTC)
+    const kickoffUTC = Date.UTC(2026, mo - 1, d, h - 2, mi);
+    return Date.now() >= kickoffUTC;
   };
   const [rInput, setRInput] = useState({ s1:0, s2:0 });
   const [adminPin, setAdminPin] = useState("");
