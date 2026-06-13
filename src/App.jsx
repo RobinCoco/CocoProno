@@ -76,11 +76,11 @@ const MATCH_SCHEDULE = {
   9:{date:"19/06",time:"21:00"},10:{date:"18/06",time:"21:00"},
  11:{date:"25/06",time:"21:00"},12:{date:"25/06",time:"21:00"},
   // Groupe C — Brésil, Maroc, Haïti, Écosse
- 13:{date:"13/06",time:"00:00"},14:{date:"13/06",time:"03:00"},
+ 13:{date:"14/06",time:"00:00"},14:{date:"14/06",time:"03:00"},
  15:{date:"20/06",time:"21:00"},16:{date:"21/06",time:"00:00"},
  17:{date:"25/06",time:"00:00"},18:{date:"25/06",time:"00:00"},
   // Groupe D — États-Unis, Paraguay, Australie, Turquie
- 19:{date:"13/06",time:"03:00"},20:{date:"13/06",time:"06:00"},
+ 19:{date:"13/06",time:"03:00"},20:{date:"14/06",time:"06:00"},
  21:{date:"20/06",time:"21:00"},22:{date:"21/06",time:"00:00"},
  23:{date:"27/06",time:"03:00"},24:{date:"27/06",time:"03:00"},
   // Groupe E — Allemagne, Curaçao, Côte d'Ivoire, Équateur
