@@ -62,23 +62,59 @@ const GROUPS = {
   L: ["🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", "🇭🇷 Croatie", "🇬🇭 Ghana", "🇵🇦 Panama"],
 };
 
-const MD_DATES = {
-  1: { A:"11/06",B:"12/06",C:"12/06",D:"13/06",E:"13/06",F:"14/06",G:"14/06",H:"15/06",I:"15/06",J:"11/06",K:"12/06",L:"13/06" },
-  2: { A:"19/06",B:"20/06",C:"19/06",D:"21/06",E:"20/06",F:"22/06",G:"21/06",H:"23/06",I:"22/06",J:"20/06",K:"19/06",L:"21/06" },
-  3: { A:"26/06",B:"26/06",C:"27/06",D:"27/06",E:"28/06",F:"28/06",G:"29/06",H:"29/06",I:"30/06",J:"30/06",K:"02/07",L:"02/07" },
-};
-
-// Horaires des matchs (heure locale CET — à confirmer avec le calendrier officiel FIFA)
-// J1 & J2 : 1er match 21h00, 2e match 00h00 | J3 : matchs simultanés à 21h00
-const MD_TIMES = {
-  1: { A:"21:00",B:"21:00",C:"00:00",D:"21:00",E:"00:00",F:"21:00",G:"00:00",H:"21:00",I:"00:00",J:"00:00",K:"00:00",L:"00:00" },
-  2: { A:"00:00",B:"21:00",C:"21:00",D:"00:00",E:"21:00",F:"00:00",G:"21:00",H:"00:00",I:"21:00",J:"21:00",K:"00:00",L:"21:00" },
-  3: { A:"21:00",B:"21:00",C:"21:00",D:"21:00",E:"21:00",F:"21:00",G:"21:00",H:"21:00",I:"21:00",J:"21:00",K:"21:00",L:"21:00" },
-};
-const MD_TIMES2 = {
-  1: { A:"00:00",B:"00:00",C:"03:00",D:"00:00",E:"03:00",F:"00:00",G:"03:00",H:"00:00",I:"03:00",J:"03:00",K:"03:00",L:"03:00" },
-  2: { A:"03:00",B:"00:00",C:"00:00",D:"03:00",E:"00:00",F:"03:00",G:"00:00",H:"03:00",I:"00:00",J:"00:00",K:"03:00",L:"00:00" },
-  3: { A:"21:00",B:"21:00",C:"21:00",D:"21:00",E:"21:00",F:"21:00",G:"21:00",H:"21:00",I:"21:00",J:"21:00",K:"21:00",L:"21:00" },
+// ─── Calendrier réel CdM 2026 (heure française CEST) ─────────────────────────
+// Sources : Eurosport, footmercato.net, franceinfo (juin 2026)
+// Clé = match_id tel que généré par generateMatches()
+// Ordre : pour chaque groupe A→L : J1p0, J1p1, J2p0, J2p1, J3p0, J3p1
+const MATCH_SCHEDULE = {
+  // Groupe A — Mexique, Afrique du Sud, Corée du Sud, Tchéquie
+  1:{date:"11/06",time:"21:00"}, 2:{date:"12/06",time:"04:00"},
+  3:{date:"19/06",time:"03:00"}, 4:{date:"18/06",time:"18:00"},
+  5:{date:"25/06",time:"03:00"}, 6:{date:"25/06",time:"03:00"},
+  // Groupe B — Canada, Bosnie-Herzégovine, Qatar, Suisse
+  7:{date:"12/06",time:"21:00"}, 8:{date:"13/06",time:"21:00"},
+  9:{date:"19/06",time:"21:00"},10:{date:"18/06",time:"21:00"},
+ 11:{date:"25/06",time:"21:00"},12:{date:"25/06",time:"21:00"},
+  // Groupe C — Brésil, Maroc, Haïti, Écosse
+ 13:{date:"13/06",time:"00:00"},14:{date:"13/06",time:"03:00"},
+ 15:{date:"20/06",time:"21:00"},16:{date:"21/06",time:"00:00"},
+ 17:{date:"25/06",time:"00:00"},18:{date:"25/06",time:"00:00"},
+  // Groupe D — États-Unis, Paraguay, Australie, Turquie
+ 19:{date:"13/06",time:"03:00"},20:{date:"13/06",time:"06:00"},
+ 21:{date:"20/06",time:"21:00"},22:{date:"21/06",time:"00:00"},
+ 23:{date:"27/06",time:"03:00"},24:{date:"27/06",time:"03:00"},
+  // Groupe E — Allemagne, Curaçao, Côte d'Ivoire, Équateur
+ 25:{date:"14/06",time:"19:00"},26:{date:"15/06",time:"01:00"},
+ 27:{date:"21/06",time:"21:00"},28:{date:"20/06",time:"02:00"},
+ 29:{date:"28/06",time:"22:00"},30:{date:"28/06",time:"22:00"},
+  // Groupe F — Pays-Bas, Japon, Suède, Tunisie
+ 31:{date:"14/06",time:"22:00"},32:{date:"15/06",time:"04:00"},
+ 33:{date:"21/06",time:"21:00"},34:{date:"20/06",time:"06:00"},
+ 35:{date:"28/06",time:"18:00"},36:{date:"28/06",time:"18:00"},
+  // Groupe G — Belgique, Égypte, Iran, Nouvelle-Zélande
+ 37:{date:"14/06",time:"21:00"},38:{date:"15/06",time:"03:00"},
+ 39:{date:"20/06",time:"21:00"},40:{date:"21/06",time:"03:00"},
+ 41:{date:"29/06",time:"21:00"},42:{date:"29/06",time:"21:00"},
+  // Groupe H — Espagne, Cap-Vert, Arabie Saoudite, Uruguay
+ 43:{date:"14/06",time:"18:00"},44:{date:"15/06",time:"00:00"},
+ 45:{date:"20/06",time:"18:00"},46:{date:"21/06",time:"00:00"},
+ 47:{date:"29/06",time:"18:00"},48:{date:"29/06",time:"18:00"},
+  // Groupe I — France, Sénégal, Irak, Norvège
+ 49:{date:"16/06",time:"21:00"},50:{date:"17/06",time:"00:00"},
+ 51:{date:"22/06",time:"23:00"},52:{date:"23/06",time:"02:00"},
+ 53:{date:"26/06",time:"21:00"},54:{date:"26/06",time:"21:00"},
+  // Groupe J — Argentine, Algérie, Autriche, Jordanie
+ 55:{date:"17/06",time:"03:00"},56:{date:"17/06",time:"06:00"},
+ 57:{date:"22/06",time:"19:00"},58:{date:"23/06",time:"05:00"},
+ 59:{date:"30/06",time:"21:00"},60:{date:"30/06",time:"21:00"},
+  // Groupe K — Portugal, RD Congo, Ouzbékistan, Colombie
+ 61:{date:"17/06",time:"19:00"},62:{date:"18/06",time:"04:00"},
+ 63:{date:"23/06",time:"19:00"},64:{date:"24/06",time:"04:00"},
+ 65:{date:"02/07",time:"21:00"},66:{date:"02/07",time:"21:00"},
+  // Groupe L — Angleterre, Croatie, Ghana, Panama
+ 67:{date:"17/06",time:"22:00"},68:{date:"18/06",time:"01:00"},
+ 69:{date:"23/06",time:"22:00"},70:{date:"24/06",time:"01:00"},
+ 71:{date:"02/07",time:"21:00"},72:{date:"02/07",time:"21:00"},
 };
 
 function generateMatches() {
@@ -90,9 +126,10 @@ function generateMatches() {
       { md:2, pairs:[[0,2],[1,3]] },
       { md:3, pairs:[[0,3],[1,2]] },
     ].forEach(({ md, pairs }) => {
-      pairs.forEach(([i, j], pairIdx) => {
-        const time = pairIdx === 0 ? MD_TIMES[md][g] : (md === 3 ? MD_TIMES[md][g] : MD_TIMES2[md][g]);
-        matches.push({ id: id++, group: `Groupe ${g}`, gKey: g, md, team1: teams[i], team2: teams[j], date: MD_DATES[md][g], time });
+      pairs.forEach(([i, j]) => {
+        const sched = MATCH_SCHEDULE[id] || { date:"30/06", time:"21:00" };
+        matches.push({ id, group:`Groupe ${g}`, gKey:g, md, team1:teams[i], team2:teams[j], date:sched.date, time:sched.time });
+        id++;
       });
     });
   });
