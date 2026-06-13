@@ -434,9 +434,8 @@ export default function CocoProno() {
     if (!m.date || !m.time) return false;
     const [d, mo] = m.date.split("/").map(Number);
     const [h, mi] = m.time.split(":").map(Number);
-    // Gestion minuit : si heure = 00:xx ou 03:xx, c'est le lendemain matin
-    const dayOffset = h < 6 ? 1 : 0;
-    const start = new Date(2026, mo - 1, d + dayOffset, h, mi);
+    // Pas de dayOffset — la date dans les données est la date réelle du match
+    const start = new Date(2026, mo - 1, d, h, mi);
     return now >= start;
   };
   const [rInput, setRInput] = useState({ s1:0, s2:0 });
