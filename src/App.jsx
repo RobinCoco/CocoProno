@@ -63,58 +63,92 @@ const GROUPS = {
 };
 
 // ─── Calendrier réel CdM 2026 (heure française CEST) ─────────────────────────
-// Sources : Eurosport, footmercato.net, franceinfo (juin 2026)
-// Clé = match_id tel que généré par generateMatches()
-// Ordre : pour chaque groupe A→L : J1p0, J1p1, J2p0, J2p1, J3p0, J3p1
+// Sources vérifiées : Eurosport, UEFA, Flashscore, France24 (juin 2026)
 const MATCH_SCHEDULE = {
-  // Groupe A — Mexique, Afrique du Sud, Corée du Sud, Tchéquie
-  1:{date:"11/06",time:"21:00"}, 2:{date:"12/06",time:"04:00"},
-  3:{date:"19/06",time:"03:00"}, 4:{date:"18/06",time:"18:00"},
-  5:{date:"25/06",time:"03:00"}, 6:{date:"25/06",time:"03:00"},
-  // Groupe B — Canada, Bosnie-Herzégovine, Qatar, Suisse
-  7:{date:"12/06",time:"21:00"}, 8:{date:"13/06",time:"21:00"},
-  9:{date:"19/06",time:"21:00"},10:{date:"18/06",time:"21:00"},
- 11:{date:"25/06",time:"21:00"},12:{date:"25/06",time:"21:00"},
-  // Groupe C — Brésil, Maroc, Haïti, Écosse
- 13:{date:"14/06",time:"00:00"},14:{date:"14/06",time:"03:00"},
- 15:{date:"20/06",time:"21:00"},16:{date:"21/06",time:"00:00"},
- 17:{date:"25/06",time:"00:00"},18:{date:"25/06",time:"00:00"},
-  // Groupe D — États-Unis, Paraguay, Australie, Turquie
- 19:{date:"13/06",time:"03:00"},20:{date:"14/06",time:"06:00"},
- 21:{date:"20/06",time:"21:00"},22:{date:"21/06",time:"00:00"},
- 23:{date:"27/06",time:"03:00"},24:{date:"27/06",time:"03:00"},
-  // Groupe E — Allemagne, Curaçao, Côte d'Ivoire, Équateur
- 25:{date:"14/06",time:"19:00"},26:{date:"15/06",time:"01:00"},
- 27:{date:"21/06",time:"21:00"},28:{date:"20/06",time:"02:00"},
- 29:{date:"28/06",time:"22:00"},30:{date:"28/06",time:"22:00"},
-  // Groupe F — Pays-Bas, Japon, Suède, Tunisie
- 31:{date:"14/06",time:"22:00"},32:{date:"15/06",time:"04:00"},
- 33:{date:"21/06",time:"21:00"},34:{date:"20/06",time:"06:00"},
- 35:{date:"28/06",time:"18:00"},36:{date:"28/06",time:"18:00"},
-  // Groupe G — Belgique, Égypte, Iran, Nouvelle-Zélande
- 37:{date:"14/06",time:"21:00"},38:{date:"15/06",time:"03:00"},
- 39:{date:"20/06",time:"21:00"},40:{date:"21/06",time:"03:00"},
- 41:{date:"29/06",time:"21:00"},42:{date:"29/06",time:"21:00"},
-  // Groupe H — Espagne, Cap-Vert, Arabie Saoudite, Uruguay
- 43:{date:"14/06",time:"18:00"},44:{date:"15/06",time:"00:00"},
- 45:{date:"20/06",time:"18:00"},46:{date:"21/06",time:"00:00"},
- 47:{date:"29/06",time:"18:00"},48:{date:"29/06",time:"18:00"},
-  // Groupe I — France, Sénégal, Irak, Norvège
- 49:{date:"16/06",time:"21:00"},50:{date:"17/06",time:"00:00"},
- 51:{date:"22/06",time:"23:00"},52:{date:"23/06",time:"02:00"},
- 53:{date:"26/06",time:"21:00"},54:{date:"26/06",time:"21:00"},
-  // Groupe J — Argentine, Algérie, Autriche, Jordanie
- 55:{date:"17/06",time:"03:00"},56:{date:"17/06",time:"06:00"},
- 57:{date:"22/06",time:"19:00"},58:{date:"23/06",time:"05:00"},
- 59:{date:"30/06",time:"21:00"},60:{date:"30/06",time:"21:00"},
-  // Groupe K — Portugal, RD Congo, Ouzbékistan, Colombie
- 61:{date:"17/06",time:"19:00"},62:{date:"18/06",time:"04:00"},
- 63:{date:"23/06",time:"19:00"},64:{date:"24/06",time:"04:00"},
- 65:{date:"02/07",time:"21:00"},66:{date:"02/07",time:"21:00"},
-  // Groupe L — Angleterre, Croatie, Ghana, Panama
- 67:{date:"17/06",time:"22:00"},68:{date:"18/06",time:"01:00"},
- 69:{date:"23/06",time:"22:00"},70:{date:"24/06",time:"01:00"},
- 71:{date:"02/07",time:"21:00"},72:{date:"02/07",time:"21:00"},
+  // ── Groupe A — Mexique(0) AfrSud(1) Corée(2) Tchéquie(3) ──────────────────
+  1:{date:"11/06",time:"21:00"}, // J1p0 Mexique-AfrSud ✓
+  2:{date:"12/06",time:"04:00"}, // J1p1 Corée-Tchéquie ✓
+  3:{date:"19/06",time:"03:00"}, // J2p0 Mexique-Corée ✓
+  4:{date:"18/06",time:"18:00"}, // J2p1 AfrSud-Tchéquie ✓
+  5:{date:"25/06",time:"03:00"}, // J3p0 Mexique-Tchéquie ✓
+  6:{date:"25/06",time:"03:00"}, // J3p1 AfrSud-Corée ✓
+  // ── Groupe B — Canada(0) Bosnie(1) Qatar(2) Suisse(3) ─────────────────────
+  7:{date:"12/06",time:"21:00"}, // J1p0 Canada-Bosnie ✓
+  8:{date:"13/06",time:"21:00"}, // J1p1 Qatar-Suisse ✓
+  9:{date:"19/06",time:"21:00"}, // J2p0 Canada-Qatar (approx)
+ 10:{date:"18/06",time:"21:00"}, // J2p1 Bosnie-Suisse ✓
+ 11:{date:"24/06",time:"21:00"}, // J3p0 Canada-Suisse ✓
+ 12:{date:"24/06",time:"21:00"}, // J3p1 Bosnie-Qatar ✓
+  // ── Groupe C — Brésil(0) Maroc(1) Haïti(2) Écosse(3) ────────────────────
+ 13:{date:"14/06",time:"00:00"}, // J1p0 Brésil-Maroc ✓
+ 14:{date:"14/06",time:"03:00"}, // J1p1 Haïti-Écosse ✓
+ 15:{date:"20/06",time:"02:30"}, // J2p0 Brésil-Haïti ✓
+ 16:{date:"20/06",time:"00:00"}, // J2p1 Maroc-Écosse ✓
+ 17:{date:"25/06",time:"00:00"}, // J3p0 Brésil-Écosse ✓
+ 18:{date:"25/06",time:"00:00"}, // J3p1 Maroc-Haïti ✓
+  // ── Groupe D — États-Unis(0) Paraguay(1) Australie(2) Turquie(3) ──────────
+ 19:{date:"13/06",time:"03:00"}, // J1p0 USA-Paraguay ✓
+ 20:{date:"14/06",time:"06:00"}, // J1p1 Australie-Turquie ✓
+ 21:{date:"19/06",time:"19:00"}, // J2p0 USA-Australie (approx)
+ 22:{date:"20/06",time:"05:00"}, // J2p1 Paraguay-Turquie ✓
+ 23:{date:"26/06",time:"22:00"}, // J3p0 USA-Turquie (approx)
+ 24:{date:"26/06",time:"22:00"}, // J3p1 Paraguay-Australie (approx)
+  // ── Groupe E — Allemagne(0) Curaçao(1) CIvoire(2) Équateur(3) ────────────
+ 25:{date:"14/06",time:"19:00"}, // J1p0 Allemagne-Curaçao ✓
+ 26:{date:"15/06",time:"01:00"}, // J1p1 CIvoire-Équateur ✓
+ 27:{date:"20/06",time:"22:00"}, // J2p0 Allemagne-CIvoire ✓
+ 28:{date:"21/06",time:"02:00"}, // J2p1 Curaçao-Équateur ✓
+ 29:{date:"25/06",time:"22:00"}, // J3p0 Allemagne-Équateur ✓
+ 30:{date:"25/06",time:"22:00"}, // J3p1 Curaçao-CIvoire ✓
+  // ── Groupe F — Pays-Bas(0) Japon(1) Suède(2) Tunisie(3) ─────────────────
+ 31:{date:"14/06",time:"22:00"}, // J1p0 Pays-Bas-Japon ✓
+ 32:{date:"15/06",time:"04:00"}, // J1p1 Suède-Tunisie ✓
+ 33:{date:"20/06",time:"19:00"}, // J2p0 Pays-Bas-Suède ✓
+ 34:{date:"21/06",time:"06:00"}, // J2p1 Japon-Tunisie ✓
+ 35:{date:"26/06",time:"01:00"}, // J3p0 Pays-Bas-Tunisie ✓
+ 36:{date:"26/06",time:"01:00"}, // J3p1 Japon-Suède ✓
+  // ── Groupe G — Belgique(0) Égypte(1) Iran(2) NvlZélande(3) ──────────────
+ 37:{date:"15/06",time:"21:00"}, // J1p0 Belgique-Égypte ✓ (était 14/06 ← CORRIGÉ)
+ 38:{date:"16/06",time:"03:00"}, // J1p1 Iran-NvlZélande ✓ (était 15/06 ← CORRIGÉ)
+ 39:{date:"21/06",time:"21:00"}, // J2p0 Belgique-Iran ✓
+ 40:{date:"22/06",time:"03:00"}, // J2p1 Égypte-NvlZélande ✓
+ 41:{date:"27/06",time:"21:00"}, // J3p0 Belgique-NvlZélande (approx)
+ 42:{date:"27/06",time:"21:00"}, // J3p1 Égypte-Iran (approx)
+  // ── Groupe H — Espagne(0) CapVert(1) ArbSaoud(2) Uruguay(3) ─────────────
+ 43:{date:"15/06",time:"18:00"}, // J1p0 Espagne-CapVert ✓ (était 14/06 ← CORRIGÉ)
+ 44:{date:"16/06",time:"00:00"}, // J1p1 ArbSaoud-Uruguay ✓ (était 15/06 ← CORRIGÉ)
+ 45:{date:"21/06",time:"18:00"}, // J2p0 Espagne-ArbSaoud ✓
+ 46:{date:"22/06",time:"00:00"}, // J2p1 CapVert-Uruguay ✓
+ 47:{date:"27/06",time:"02:00"}, // J3p0 Espagne-Uruguay ✓
+ 48:{date:"27/06",time:"02:00"}, // J3p1 CapVert-ArbSaoud ✓
+  // ── Groupe I — France(0) Sénégal(1) Irak(2) Norvège(3) ──────────────────
+ 49:{date:"16/06",time:"21:00"}, // J1p0 France-Sénégal ✓
+ 50:{date:"17/06",time:"00:00"}, // J1p1 Irak-Norvège ✓
+ 51:{date:"22/06",time:"23:00"}, // J2p0 France-Irak ✓
+ 52:{date:"23/06",time:"02:00"}, // J2p1 Sénégal-Norvège ✓
+ 53:{date:"26/06",time:"21:00"}, // J3p0 France-Norvège ✓
+ 54:{date:"26/06",time:"21:00"}, // J3p1 Sénégal-Irak ✓
+  // ── Groupe J — Argentine(0) Algérie(1) Autriche(2) Jordanie(3) ───────────
+ 55:{date:"17/06",time:"03:00"}, // J1p0 Argentine-Algérie ✓
+ 56:{date:"17/06",time:"06:00"}, // J1p1 Autriche-Jordanie ✓
+ 57:{date:"22/06",time:"19:00"}, // J2p0 Argentine-Autriche ✓
+ 58:{date:"23/06",time:"05:00"}, // J2p1 Algérie-Jordanie ✓
+ 59:{date:"28/06",time:"03:00"}, // J3p0 Argentine-Jordanie (approx)
+ 60:{date:"28/06",time:"03:00"}, // J3p1 Algérie-Autriche (approx)
+  // ── Groupe K — Portugal(0) RDCongo(1) Ouzbékistan(2) Colombie(3) ─────────
+ 61:{date:"17/06",time:"19:00"}, // J1p0 Portugal-RDCongo ✓
+ 62:{date:"18/06",time:"04:00"}, // J1p1 Ouzbékistan-Colombie ✓
+ 63:{date:"23/06",time:"19:00"}, // J2p0 Portugal-Ouzbékistan ✓
+ 64:{date:"24/06",time:"04:00"}, // J2p1 RDCongo-Colombie ✓
+ 65:{date:"28/06",time:"01:30"}, // J3p0 Portugal-Colombie ✓
+ 66:{date:"28/06",time:"01:30"}, // J3p1 RDCongo-Ouzbékistan ✓
+  // ── Groupe L — Angleterre(0) Croatie(1) Ghana(2) Panama(3) ──────────────
+ 67:{date:"17/06",time:"22:00"}, // J1p0 Angleterre-Croatie ✓
+ 68:{date:"18/06",time:"01:00"}, // J1p1 Ghana-Panama ✓
+ 69:{date:"23/06",time:"22:00"}, // J2p0 Angleterre-Ghana ✓
+ 70:{date:"24/06",time:"01:00"}, // J2p1 Croatie-Panama ✓
+ 71:{date:"27/06",time:"23:00"}, // J3p0 Angleterre-Panama ✓
+ 72:{date:"27/06",time:"23:00"}, // J3p1 Croatie-Ghana ✓
 };
 
 function generateMatches() {
