@@ -136,7 +136,14 @@ function generateMatches() {
   return matches;
 }
 
-const ALL_MATCHES = generateMatches();
+const ALL_MATCHES = generateMatches().sort((a, b) => {
+  const toUTC = m => {
+    const [d, mo] = m.date.split("/").map(Number);
+    const [h, mi] = m.time.split(":").map(Number);
+    return Date.UTC(2026, mo - 1, d, h - 2, mi); // CEST = UTC+2
+  };
+  return toUTC(a) - toUTC(b);
+});
 
 // ─── Calcul automatique des qualifiés ────────────────────────────────────────
 // Retourne { rank1, rank2, rank3 } par groupe + 8 meilleurs 3es selon FIFA 2026
