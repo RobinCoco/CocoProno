@@ -136,14 +136,7 @@ function generateMatches() {
   return matches;
 }
 
-const ALL_MATCHES = generateMatches().sort((a, b) => {
-  const toUTC = m => {
-    const [d, mo] = m.date.split("/").map(Number);
-    const [h, mi] = m.time.split(":").map(Number);
-    return Date.UTC(2026, mo - 1, d, h - 2, mi); // CEST = UTC+2
-  };
-  return toUTC(a) - toUTC(b);
-});
+const ALL_MATCHES = generateMatches();
 
 // ─── Calcul automatique des qualifiés ────────────────────────────────────────
 // Retourne { rank1, rank2, rank3 } par groupe + 8 meilleurs 3es selon FIFA 2026
@@ -922,11 +915,24 @@ export default function CocoProno() {
   const myStats = me ? leaderboard.find(p => p.id === me.id) : null;
   const myRank  = me ? leaderboard.findIndex(p => p.id === me.id) + 1 : null;
 
-  const filtered = ALL_MATCHES.filter(m => {
-    if (filterG !== "all" && m.group !== filterG) return false;
-    if (filterMD !== "all" && m.md !== +filterMD) return false;
-    return true;
-  });
+  const kickoffUTC = m => {
+    const [d, mo] = m.date.split("/").map(Number);
+    const [h, mi] = m.time.split(":").map(Number);
+    return Date.UTC(2026, mo - 1, d, h - 2, mi);
+  };
+
+  const filtered = (() => {
+    const list = ALL_MATCHES.filter(m => {
+      if (filterG !== "all" && m.group !== filterG) return false;
+      if (filterMD !== "all" && m.md !== +filterMD) return false;
+      return true;
+    });
+    // Tri chronologique uniquement quand aucun filtre actif (onglet "Tous")
+    if (filterG === "all" && filterMD === "all") {
+      return [...list].sort((a, b) => kickoffUTC(a) - kickoffUTC(b));
+    }
+    return list;
+  })();
 
   // ─── Layout wrapper — fonction, pas composant, pour préserver le focus des inputs ─
   const pageWrap = (children) => (
