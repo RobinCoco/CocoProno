@@ -1611,109 +1611,153 @@ export default function CocoProno() {
             </>;
           }
 
-          // ── Phase finale ────────────────────────────────
-          const CH=54, CW=130, GAP=7, PH=2*CH+GAP; // 115px pair height
-          const CONN=18, LC="rgba(21,128,61,0.55)";
+          // ── Phase finale — arbre unifié ────────────────────────────────
+          const CH = 62, CW = 138, GAP = 16, CONN = 26;
+          const LC = "rgba(148,210,160,0.45)";
 
-          // Compact bracket card
-          const bc = (id) => {
+          // Carte de match du bracket
+          const bc = (id, opts = {}) => {
             const m = ALL_KO_MATCHES.find(x => x.id === id);
-            if (!m) return <div key={id} style={{width:CW,height:CH,borderRadius:8,background:"rgba(255,255,255,0.2)",border:"1.5px dashed rgba(21,128,61,0.2)",flexShrink:0}} />;
+            if (!m) return <div style={{width:CW,height:CH,borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1.5px dashed rgba(255,255,255,0.15)"}} />;
             const t1s = resolveKoTeam(id,"team1") || koTeams[m.id]?.team1 || m.team1;
             const t2s = resolveKoTeam(id,"team2") || koTeams[m.id]?.team2 || m.team2;
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
             const real=realScores[m.id], pred=preds[me?`${me.id}_${m.id}`:null];
             const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
-            const locked=isMatchLocked(m), known=Boolean(koTeams[m.id]?.team1||!t1s.startsWith("🏳"));
-            const row=(t,sc,pr)=>(
-              <div style={{display:"flex",alignItems:"center",gap:3,padding:"3px 5px"}}>
-                <span style={{fontSize:12,fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif",flexShrink:0}}>{t.emoji}</span>
-                <span style={{fontSize:9,fontWeight:700,flex:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",color:known?TEXT:"#bbb"}}>{t.name.length>11?t.name.slice(0,10)+"…":t.name}</span>
-                <span style={{fontSize:11,fontWeight:900,color:real!==undefined?G:"#ccc",minWidth:10,textAlign:"right",flexShrink:0}}>{real!==undefined?sc:pr!==undefined?pr:"–"}</span>
+            const locked=isMatchLocked(m);
+            const known1 = Boolean(koTeams[m.id]?.team1 || !t1s.startsWith("🏳"));
+            const known2 = Boolean(koTeams[m.id]?.team2 || !t2s.startsWith("🏳"));
+            const winnerSide = real ? (real.s1 > real.s2 ? 1 : real.s2 > real.s1 ? 2 : 0) : 0;
+            const row = (t, sc, pr, known, side) => (
+              <div style={{
+                display:"flex", alignItems:"center", gap:5, padding:"4px 7px",
+                background: winnerSide===side ? "rgba(21,128,61,0.12)" : "transparent",
+              }}>
+                <span style={{fontSize:13,flexShrink:0,opacity:known?1:0.4}}>{t.emoji}</span>
+                <span style={{
+                  fontSize:9.5, fontWeight: winnerSide===side?800:600, flex:1,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                  color: known ? (winnerSide===side?"#0f2d12":"#3a3a3a") : "#aaa",
+                  fontStyle: known?"normal":"italic",
+                }}>{t.name.length>13?t.name.slice(0,12)+"…":t.name}</span>
+                <span style={{
+                  fontSize:11.5, fontWeight:900, minWidth:14, textAlign:"right", flexShrink:0,
+                  color: real!==undefined ? (winnerSide===side?"#15803d":"#888") : pr!==undefined ? "#b45309" : "#ccc",
+                }}>{real!==undefined?sc:pr!==undefined?pr:"–"}</span>
               </div>
             );
             return (
-              <div key={id} style={{width:CW,borderRadius:8,overflow:"hidden",flexShrink:0,
-                background:meta?"rgba(255,255,255,0.96)":"rgba(255,255,255,0.88)",
-                border:`1.5px solid ${meta?meta.hex:locked?"rgba(180,180,180,0.4)":known?"rgba(21,128,61,0.35)":"rgba(150,150,150,0.2)"}`,
-                boxShadow:"0 2px 8px rgba(0,0,0,0.12)"}}>
-                <div style={{fontSize:8,fontWeight:800,textAlign:"center",padding:"2px",borderBottom:"1px solid rgba(0,0,0,0.06)",background:meta?`${meta.hex}22`:"rgba(0,0,0,0.03)",color:meta?meta.hex:MUTED}}>
-                  {m.roundShort}{locked?" 🔒":m.time?" ⏱"+m.time:""}
+              <div style={{
+                width:CW, borderRadius:10, overflow:"hidden",
+                background: meta ? "#ffffff" : "rgba(255,255,255,0.94)",
+                border:`1.5px solid ${meta?meta.hex:locked?"rgba(150,150,150,0.5)":"rgba(21,128,61,0.25)"}`,
+                boxShadow:"0 2px 10px rgba(0,0,0,0.18)",
+              }}>
+                <div style={{
+                  fontSize:8, fontWeight:800, textAlign:"center", padding:"3px 4px",
+                  background: meta ? `${meta.hex}1c` : "rgba(21,128,61,0.08)",
+                  color: meta ? meta.hex : "#3a7a45", letterSpacing:0.3,
+                }}>
+                  {m.roundShort}{locked && !real ? " 🔒" : m.time ? " · "+m.date : ""}
                 </div>
-                {row(t1,real?.s1,pred?.s1)}
-                <div style={{height:1,background:"rgba(0,0,0,0.06)",margin:"0 4px"}}/>
-                {row(t2,real?.s2,pred?.s2)}
-                {meta&&<div style={{textAlign:"center",fontSize:8,color:meta.hex,fontWeight:800,padding:"1px",borderTop:"1px solid rgba(0,0,0,0.05)"}}>{meta.icon}+{pts}pt</div>}
+                {row(t1,real?.s1,pred?.s1,known1,1)}
+                <div style={{height:1,background:"rgba(0,0,0,0.07)"}}/>
+                {row(t2,real?.s2,pred?.s2,known2,2)}
+                {meta && (
+                  <div style={{textAlign:"center",fontSize:8.5,color:"#fff",fontWeight:800,padding:"2px",background:meta.hex}}>
+                    {meta.icon} +{pts}pt{pts>1?"s":""}
+                  </div>
+                )}
               </div>
             );
           };
 
-          // Build bracket half: 4 R16 pairs → 4 QF → 2 SF
-          const buildHalf = (r16pairs, qfIds, sfIds) => {
-            const W=4*CW+3*CONN, H=4*PH;
-            const cards=[], paths=[];
-            r16pairs.forEach(([a,b],i) => {
-              const yA=i*PH, yB=i*PH+PH-CH;
-              cards.push({id:a,x:0,y:yA}); cards.push({id:b,x:0,y:yB});
-              const cA=yA+CH/2, cB=yB+CH/2, mid=i*PH+PH/2;
-              const x0=CW, x1=CW+CONN;
-              paths.push(`M${x0},${cA}H${x1}V${mid}`);
-              paths.push(`M${x0},${cB}H${x1}V${mid}`);
-            });
-            qfIds.forEach((id,i) => {
-              const qfX=CW+CONN, qfY=i*PH+PH/2-CH/2;
-              cards.push({id,x:qfX,y:qfY});
-              if (i%2===0) {
-                const cA=i*PH+PH/2, cB=(i+1)*PH+PH/2, sfMid=i*PH+PH;
-                const x0=qfX+CW, x1=qfX+CW+CONN;
-                paths.push(`M${x0},${cA}H${x1}V${sfMid}`);
-                paths.push(`M${x0},${cB}H${x1}V${sfMid}`);
-              }
-            });
-            sfIds.forEach((id,i) => {
-              const sfX=CW+CONN+CW+CONN, sfY=i*2*PH+PH-CH/2;
-              cards.push({id,x:sfX,y:sfY});
-            });
-            return (
-              <div style={{overflowX:"auto",paddingBottom:4}}>
-                <div style={{position:"relative",width:W,height:H}}>
-                  <svg style={{position:"absolute",inset:0,width:W,height:H,pointerEvents:"none",overflow:"visible"}}>
-                    {paths.map((d,i)=><path key={i} d={d} fill="none" stroke={LC} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>)}
-                  </svg>
-                  {cards.map(({id,x,y})=>(
-                    <div key={id} style={{position:"absolute",left:x,top:y}}>{bc(id)}</div>
-                  ))}
-                </div>
-              </div>
-            );
-          };
+          // ── Construit l'arbre complet (32es → 16es → Quarts → Demi → Finale) ──
+          const buildFullBracket = () => {
+            // Ordre des 32es tel qu'ils s'enchaînent dans le tableau (paires adjacentes → match suivant)
+            const leaves = [1001,1004, 1003,1006, 1002,1005, 1007,1008, 1012,1011, 1010,1009, 1015,1014, 1013,1016];
+            const r1 = [1101,1102,1103,1104,1105,1106,1107,1108];
+            const r2 = [1201,1202,1203,1204];
+            const r3 = [1301,1302];
 
-          // Finale card
-          const finaleCard = () => {
-            const m=ALL_KO_MATCHES.find(x=>x.id===1402);
-            const t1s=resolveKoTeam(1402,"team1")||koTeams[1402]?.team1||m.team1, t2s=resolveKoTeam(1402,"team2")||koTeams[1402]?.team2||m.team2;
-            const t1=splitTeam(t1s), t2=splitTeam(t2s);
-            const real=realScores[1402], pred=preds[me?`${me.id}_1402`:null];
-            const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
+            const y0 = leaves.map((_,i) => i*(CH+GAP));
+            const y1 = r1.map((_,i) => (y0[2*i]+y0[2*i+1])/2);
+            const y2 = r2.map((_,i) => (y1[2*i]+y1[2*i+1])/2);
+            const y3 = r3.map((_,i) => (y2[2*i]+y2[2*i+1])/2);
+            const yFinale = (y3[0]+y3[1])/2;
+            const yPetite = yFinale + CH + GAP*2.5;
+
+            const X0=0, X1=CW+CONN, X2=2*(CW+CONN), X3=3*(CW+CONN), X4=4*(CW+CONN);
+            const totalW = X4 + CW + 10;
+            const totalH = Math.max(y0[y0.length-1], yPetite) + CH + 50;
+
+            const cards = [
+              ...leaves.map((id,i) => ({ id, x:X0, y:y0[i] })),
+              ...r1.map((id,i) => ({ id, x:X1, y:y1[i] })),
+              ...r2.map((id,i) => ({ id, x:X2, y:y2[i] })),
+              ...r3.map((id,i) => ({ id, x:X3, y:y3[i] })),
+              { id:1402, x:X4, y:yFinale, final:true },
+              { id:1401, x:X4, y:yPetite, small:true },
+            ];
+
+            // Connecteurs en escalier (elbow) entre chaque paire parent/enfant
+            const elbow = (xChild, yChildA, yChildB, xParent, yParent) => {
+              const xMid = xChild + CW + (xParent - xChild - CW)/2;
+              return [
+                `M${xChild+CW},${yChildA+CH/2} H${xMid}`,
+                `M${xChild+CW},${yChildB+CH/2} H${xMid}`,
+                `M${xMid},${yChildA+CH/2} V${yChildB+CH/2}`,
+                `M${xMid},${yParent+CH/2} H${xParent}`,
+              ];
+            };
+            const paths = [];
+            for (let i=0;i<r1.length;i++) paths.push(...elbow(X0,y0[2*i],y0[2*i+1],X1,y1[i]));
+            for (let i=0;i<r2.length;i++) paths.push(...elbow(X1,y1[2*i],y1[2*i+1],X2,y2[i]));
+            for (let i=0;i<r3.length;i++) paths.push(...elbow(X2,y2[2*i],y2[2*i+1],X3,y3[i]));
+            paths.push(...elbow(X3,y3[0],y3[1],X4,yFinale));
+            // Connecteur pointillé vers la petite finale (perdants des demies)
+            const xMidP = X3+CW+(X4-X3-CW)/2;
+            paths.push({ d:`M${X3+CW},${y3[0]+CH/2} H${xMidP} V${yPetite+CH/2} H${X4}`, dashed:true });
+            paths.push({ d:`M${X3+CW},${y3[1]+CH/2} H${xMidP+8} V${yPetite+CH/2}`, dashed:true });
+
+            const roundHeaders = [
+              { x:X0, label:"32es" }, { x:X1, label:"16es" },
+              { x:X2, label:"Quarts" }, { x:X3, label:"Demi" }, { x:X4, label:"Finale" },
+            ];
+
             return (
-              <div style={{...card,padding:"16px",margin:"20px 0",background:"linear-gradient(135deg,rgba(251,191,36,0.22),rgba(245,158,11,0.12))",border:`2px solid ${meta?meta.hex:"rgba(251,191,36,0.55)"}`,boxShadow:"0 4px 20px rgba(251,191,36,0.2)"}}>
-                <div style={{textAlign:"center",marginBottom:12}}>
-                  <span style={{fontSize:11,fontWeight:800,color:"#b45309",background:"rgba(180,83,9,0.12)",padding:"3px 14px",borderRadius:20,letterSpacing:1}}>🏆 FINALE — 19/07/2026</span>
-                </div>
-                <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:10,alignItems:"center"}}>
-                  <div style={{textAlign:"center"}}>
-                    <span style={{fontSize:32,display:"block",fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif"}}>{t1.emoji}</span>
-                    <div style={{fontSize:12,fontWeight:800,color:TEXT,marginTop:4}}>{t1.name}</div>
-                  </div>
-                  <div style={{textAlign:"center"}}>
-                    {real?<div style={{fontSize:26,fontWeight:900,color:G,letterSpacing:4}}>{real.s1} – {real.s2}</div>
-                         :<div style={{fontSize:14,fontWeight:800,color:"rgba(21,128,61,0.35)",letterSpacing:4}}>VS</div>}
-                    {pred&&<div style={{fontSize:11,color:MUTED,marginTop:3}}>Prono : {pred.s1}-{pred.s2} {meta?meta.icon:""}</div>}
-                    {meta&&<div style={{fontSize:11,fontWeight:800,color:meta.hex}}>{meta.icon} +{pts}pts</div>}
-                  </div>
-                  <div style={{textAlign:"center"}}>
-                    <span style={{fontSize:32,display:"block",fontFamily:"'Segoe UI Emoji','Apple Color Emoji',sans-serif"}}>{t2.emoji}</span>
-                    <div style={{fontSize:12,fontWeight:800,color:TEXT,marginTop:4}}>{t2.name}</div>
+              <div style={{ position:"relative" }}>
+                {/* Indicateur de scroll horizontal */}
+                <div style={{ position:"absolute", right:0, top:0, bottom:0, width:24, background:"linear-gradient(90deg,transparent,rgba(10,40,15,0.35))", pointerEvents:"none", zIndex:5, borderRadius:"0 12px 12px 0" }} />
+                <div style={{ overflowX:"auto", paddingBottom:8, WebkitOverflowScrolling:"touch" }}>
+                  <div style={{ position:"relative", width:totalW, height:totalH+30 }}>
+                    {/* En-têtes de colonnes */}
+                    {roundHeaders.map(({x,label}) => (
+                      <div key={label} style={{
+                        position:"absolute", left:x, top:0, width:CW, textAlign:"center",
+                        fontSize:10, fontWeight:800, color:"rgba(255,255,255,0.55)",
+                        textTransform:"uppercase", letterSpacing:1,
+                      }}>{label}</div>
+                    ))}
+                    <svg style={{ position:"absolute", left:0, top:30, width:totalW, height:totalH, pointerEvents:"none", overflow:"visible" }}>
+                      {paths.map((p,i) => {
+                        const d = typeof p === "string" ? p : p.d;
+                        const dashed = typeof p === "object" && p.dashed;
+                        return <path key={i} d={d} fill="none" stroke={dashed?"rgba(251,191,36,0.5)":LC} strokeWidth={dashed?1.3:1.8} strokeDasharray={dashed?"4,3":undefined} strokeLinecap="round" strokeLinejoin="round" />;
+                      })}
+                    </svg>
+                    {cards.map(({id,x,y,final,small}) => (
+                      <div key={id} style={{
+                        position:"absolute", left:x, top:30+y,
+                        transform: final ? "scale(1.12)" : small ? "scale(0.88)" : "none",
+                        transformOrigin:"left center",
+                        zIndex: final ? 3 : 1,
+                      }}>
+                        {small && <div style={{fontSize:8,fontWeight:800,color:"#fbbf24",marginBottom:2,textAlign:"center"}}>🥉 PETITE FINALE</div>}
+                        {final && <div style={{fontSize:9,fontWeight:900,color:"#fbbf24",marginBottom:3,textAlign:"center",letterSpacing:1}}>🏆 FINALE</div>}
+                        {bc(id)}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -1733,27 +1777,12 @@ export default function CocoProno() {
               </div>
 
               {bracketView ? (
-                /* ── VUE BRACKET ── */
+                /* ── VUE BRACKET — arbre unifié ── */
                 <div>
-                  {label("Tableau A — 32es S1→S8")}
-                  {buildHalf([[1001,1004],[1003,1006],[1002,1005],[1007,1008]],[1101,1102,1103,1104],[1201,1202])}
-                  {label("Tableau B — 32es S9→S16")}
-                  {buildHalf([[1012,1011],[1010,1009],[1015,1014],[1013,1016]],[1105,1106,1107,1108],[1203,1204])}
-                  {/* Demi-finales — relient les 2 tableaux */}
-                  <div style={{...card,padding:"12px 14px",marginTop:16}}>
-                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>⚡ Demi-finales</div>
-                    <div style={{display:"flex",gap:8,overflowX:"auto",justifyContent:"center"}}>
-                      {[1301,1302].map(id=><div key={id} style={{flexShrink:0}}>{bc(id)}</div>)}
-                    </div>
+                  <div style={{ fontSize:11, color:"rgba(255,255,255,0.5)", textAlign:"center", marginBottom:10 }}>
+                    ↔ Fais glisser horizontalement pour voir tout le tableau
                   </div>
-                  {finaleCard()}
-                  {/* Petite finale */}
-                  <div style={{...card,padding:"12px 14px",marginTop:12}}>
-                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>🥉 Petite finale</div>
-                    <div style={{display:"flex",gap:8,overflowX:"auto",justifyContent:"center"}}>
-                      <div style={{flexShrink:0}}>{bc(1401)}</div>
-                    </div>
-                  </div>
+                  {buildFullBracket()}
                 </div>
               ) : (
                 /* ── VUE LISTE ── */
