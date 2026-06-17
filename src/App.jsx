@@ -222,63 +222,92 @@ function computeQualified(realScores) {
   return { groupStandings, qualified, thirds };
 }
 
-// Mapping huitièmes → slots qualifiés (selon tirage FIFA 2026 provisoire)
-// H1: 1A vs 2B | H2: 1C vs 2D | H3: 1E vs 2F | H4: 1G vs 2H
-// H5: 1I vs 2J | H6: 1K vs 2L | H7: 2A vs 1B | H8: 2C vs 1D
-// H9: 2E vs 1F | H10: 2G vs 1H | H11: 2I vs 1J | H12: 2K vs 1L
-// H13-H16: meilleurs 3es
+// Mapping des 32es de finale → slots qualifiés (selon tirage officiel FIFA 2026)
+// 8 des 16 matchs opposent un 1er à un "meilleur 3e" (3e1 = meilleur 3e, ... 3e8 = moins bon des 8)
 const KO_SLOT_MAP = {
-  1001: { t1:"1A", t2:"2B" }, 1002: { t1:"1C", t2:"2D" },
-  1003: { t1:"1E", t2:"2F" }, 1004: { t1:"1G", t2:"2H" },
-  1005: { t1:"1I", t2:"2J" }, 1006: { t1:"1K", t2:"2L" },
-  1007: { t1:"2A", t2:"1B" }, 1008: { t1:"2C", t2:"1D" },
-  1009: { t1:"2E", t2:"1F" }, 1010: { t1:"2G", t2:"1H" },
-  1011: { t1:"2I", t2:"1J" }, 1012: { t1:"2K", t2:"1L" },
-  // 3es : attribués dans l'ordre des meilleurs 3es une fois connus
-  1013: { t1:"3e1", t2:"3e2" }, 1014: { t1:"3e3", t2:"3e4" },
-  1015: { t1:"3e5", t2:"3e6" }, 1016: { t1:"3e7", t2:"3e8" },
+  1001: { t1:"2A", t2:"2B" },
+  1002: { t1:"1C", t2:"2F" },
+  1003: { t1:"1E", t2:"3e1" },
+  1004: { t1:"1F", t2:"2C" },
+  1005: { t1:"2E", t2:"2I" },
+  1006: { t1:"1I", t2:"3e2" },
+  1007: { t1:"1A", t2:"3e3" },
+  1008: { t1:"1L", t2:"3e4" },
+  1009: { t1:"1G", t2:"3e5" },
+  1010: { t1:"1D", t2:"3e6" },
+  1011: { t1:"1H", t2:"2J" },
+  1012: { t1:"2K", t2:"2L" },
+  1013: { t1:"1B", t2:"3e7" },
+  1014: { t1:"2D", t2:"2G" },
+  1015: { t1:"1J", t2:"2H" },
+  1016: { t1:"1K", t2:"3e8" },
+  // 16es de finale → vainqueurs des 32es
+  1101: { t1:"W1001", t2:"W1004" },
+  1102: { t1:"W1003", t2:"W1006" },
+  1103: { t1:"W1002", t2:"W1005" },
+  1104: { t1:"W1007", t2:"W1008" },
+  1105: { t1:"W1012", t2:"W1011" },
+  1106: { t1:"W1010", t2:"W1009" },
+  1107: { t1:"W1015", t2:"W1014" },
+  1108: { t1:"W1013", t2:"W1016" },
+  // Quarts → vainqueurs des 16es
+  1201: { t1:"W1101", t2:"W1102" },
+  1202: { t1:"W1103", t2:"W1104" },
+  1203: { t1:"W1105", t2:"W1106" },
+  1204: { t1:"W1107", t2:"W1108" },
+  // Demi-finales → vainqueurs des quarts
+  1301: { t1:"W1201", t2:"W1202" },
+  1302: { t1:"W1203", t2:"W1204" },
+  // Petite finale → perdants des demies
+  1401: { t1:"L1301", t2:"L1302" },
+  // Finale → vainqueurs des demies
+  1402: { t1:"W1301", t2:"W1302" },
 };
 
 
 // ─── Phase finale ─────────────────────────────────────
 // IDs 1001+ pour éviter les collisions avec les matchs de groupes
+// Format officiel FIFA 2026 (48 équipes) : 32es (16m) → 16es (8m) → 1/4 (4m) → 1/2 (2m) → Petite finale → Finale = 32 matchs
+// Sources vérifiées : footmercato, flashscore, eurosport, cnews (juin 2026)
 const KNOCKOUT_MATCHES = [
-  // Huitièmes de finale (16 matchs)
-  { id:1001, round:"Huitièmes", roundShort:"H1",  team1:"🏳️ 1er A",   team2:"🏳️ 2e B",    date:"04/07", time:"21:00" },
-  { id:1002, round:"Huitièmes", roundShort:"H2",  team1:"🏳️ 1er C",   team2:"🏳️ 2e D",    date:"04/07", time:"00:00" },
-  { id:1003, round:"Huitièmes", roundShort:"H3",  team1:"🏳️ 1er E",   team2:"🏳️ 2e F",    date:"05/07", time:"21:00" },
-  { id:1004, round:"Huitièmes", roundShort:"H4",  team1:"🏳️ 1er G",   team2:"🏳️ 2e H",    date:"05/07", time:"00:00" },
-  { id:1005, round:"Huitièmes", roundShort:"H5",  team1:"🏳️ 1er I",   team2:"🏳️ 2e J",    date:"06/07", time:"21:00" },
-  { id:1006, round:"Huitièmes", roundShort:"H6",  team1:"🏳️ 1er K",   team2:"🏳️ 2e L",    date:"06/07", time:"00:00" },
-  { id:1007, round:"Huitièmes", roundShort:"H7",  team1:"🏳️ 2e A",    team2:"🏳️ 1er B",   date:"07/07", time:"21:00" },
-  { id:1008, round:"Huitièmes", roundShort:"H8",  team1:"🏳️ 2e C",    team2:"🏳️ 1er D",   date:"07/07", time:"00:00" },
-  { id:1009, round:"Huitièmes", roundShort:"H9",  team1:"🏳️ 2e E",    team2:"🏳️ 1er F",   date:"08/07", time:"21:00" },
-  { id:1010, round:"Huitièmes", roundShort:"H10", team1:"🏳️ 2e G",    team2:"🏳️ 1er H",   date:"08/07", time:"00:00" },
-  { id:1011, round:"Huitièmes", roundShort:"H11", team1:"🏳️ 2e I",    team2:"🏳️ 1er J",   date:"09/07", time:"21:00" },
-  { id:1012, round:"Huitièmes", roundShort:"H12", team1:"🏳️ 2e K",    team2:"🏳️ 1er L",   date:"09/07", time:"00:00" },
-  { id:1013, round:"Huitièmes", roundShort:"H13", team1:"🏳️ 3e (1)",  team2:"🏳️ 3e (2)",  date:"10/07", time:"21:00" },
-  { id:1014, round:"Huitièmes", roundShort:"H14", team1:"🏳️ 3e (3)",  team2:"🏳️ 3e (4)",  date:"10/07", time:"00:00" },
-  { id:1015, round:"Huitièmes", roundShort:"H15", team1:"🏳️ 3e (5)",  team2:"🏳️ 3e (6)",  date:"11/07", time:"21:00" },
-  { id:1016, round:"Huitièmes", roundShort:"H16", team1:"🏳️ 3e (7)",  team2:"🏳️ 3e (8)",  date:"11/07", time:"00:00" },
-  // Quarts de finale
-  { id:1101, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H1",  team2:"🏳️ Vainq. H2",  date:"14/07", time:"21:00" },
-  { id:1102, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H3",  team2:"🏳️ Vainq. H4",  date:"14/07", time:"00:00" },
-  { id:1103, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H5",  team2:"🏳️ Vainq. H6",  date:"15/07", time:"21:00" },
-  { id:1104, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7",  team2:"🏳️ Vainq. H8",  date:"15/07", time:"00:00" },
-  { id:1105, round:"Quarts", roundShort:"QF5", team1:"🏳️ Vainq. H9",  team2:"🏳️ Vainq. H10", date:"16/07", time:"21:00" },
-  { id:1106, round:"Quarts", roundShort:"QF6", team1:"🏳️ Vainq. H11", team2:"🏳️ Vainq. H12", date:"16/07", time:"00:00" },
-  { id:1107, round:"Quarts", roundShort:"QF7", team1:"🏳️ Vainq. H13", team2:"🏳️ Vainq. H14", date:"17/07", time:"21:00" },
-  { id:1108, round:"Quarts", roundShort:"QF8", team1:"🏳️ Vainq. H15", team2:"🏳️ Vainq. H16", date:"17/07", time:"00:00" },
-  // Demi-finales
-  { id:1201, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"22/07", time:"21:00" },
-  { id:1202, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"22/07", time:"00:00" },
-  { id:1203, round:"Demi-finales", roundShort:"SF3", team1:"🏳️ Vainq. QF5", team2:"🏳️ Vainq. QF6", date:"23/07", time:"21:00" },
-  { id:1204, round:"Demi-finales", roundShort:"SF4", team1:"🏳️ Vainq. QF7", team2:"🏳️ Vainq. QF8", date:"23/07", time:"00:00" },
-  // Petite finale
-  { id:1301, round:"Petite finale", roundShort:"3P",  team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"19/07", time:"21:00" },
-  { id:1302, round:"Petite finale", roundShort:"3P2", team1:"🏳️ Perdant SF3", team2:"🏳️ Perdant SF4", date:"19/07", time:"00:00" },
-  // Finale
-  { id:1401, round:"Finale", roundShort:"🏆", team1:"🏳️ Vainq. SF1+SF2", team2:"🏳️ Vainq. SF3+SF4", date:"19/07", time:"21:00" },
+  // ── 32es de finale (16 matchs, 32 équipes : 12×1ers + 12×2es + 8 meilleurs 3es) ──
+  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🏳️ 2e A", team2:"🏳️ 2e B",            date:"28/06", time:"21:00" },
+  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🏳️ 1er C", team2:"🏳️ 2e F",           date:"29/06", time:"19:00" },
+  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🏳️ 1er E", team2:"🏳️ 3e (A/B/C/D/F)",  date:"29/06", time:"22:30" },
+  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🏳️ 1er F", team2:"🏳️ 2e C",           date:"30/06", time:"03:00" },
+  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🏳️ 2e E", team2:"🏳️ 2e I",            date:"30/06", time:"19:00" },
+  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🏳️ 1er I", team2:"🏳️ 3e (C/D/F/G/H)",  date:"30/06", time:"23:00" },
+  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🏳️ 1er A", team2:"🏳️ 3e (C/E/F/H/I)",  date:"01/07", time:"03:00" },
+  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L", team2:"🏳️ 3e (E/H/I/J/K)",  date:"01/07", time:"18:00" },
+  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🏳️ 1er G", team2:"🏳️ 3e (A/E/H/I/J)",  date:"01/07", time:"22:00" },
+  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🏳️ 1er D", team2:"🏳️ 3e (B/E/F/I/J)",  date:"02/07", time:"02:00" },
+  { id:1011, round:"32es de finale", roundShort:"S11", team1:"🏳️ 1er H", team2:"🏳️ 2e J",           date:"02/07", time:"21:00" },
+  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🏳️ 2e K", team2:"🏳️ 2e L",            date:"03/07", time:"01:00" },
+  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🏳️ 1er B", team2:"🏳️ 3e (E/F/G/I/J)",  date:"03/07", time:"05:00" },
+  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🏳️ 2e D", team2:"🏳️ 2e G",            date:"03/07", time:"20:00" },
+  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er J", team2:"🏳️ 2e H",           date:"03/07", time:"23:00" },
+  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🏳️ 1er K", team2:"🏳️ 3e (D/E/I/J/L)",  date:"04/07", time:"03:30" },
+  // ── 16es de finale (8 matchs) ──
+  { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1",  team2:"🏳️ Vainq. S4",  date:"04/07", time:"19:00" },
+  { id:1102, round:"16es de finale", roundShort:"H2", team1:"🏳️ Vainq. S3",  team2:"🏳️ Vainq. S6",  date:"04/07", time:"23:00" },
+  { id:1103, round:"16es de finale", roundShort:"H3", team1:"🏳️ Vainq. S2",  team2:"🏳️ Vainq. S5",  date:"05/07", time:"22:00" },
+  { id:1104, round:"16es de finale", roundShort:"H4", team1:"🏳️ Vainq. S7",  team2:"🏳️ Vainq. S8",  date:"06/07", time:"02:00" },
+  { id:1105, round:"16es de finale", roundShort:"H5", team1:"🏳️ Vainq. S12", team2:"🏳️ Vainq. S11", date:"06/07", time:"21:00" },
+  { id:1106, round:"16es de finale", roundShort:"H6", team1:"🏳️ Vainq. S10", team2:"🏳️ Vainq. S9",  date:"07/07", time:"02:00" },
+  { id:1107, round:"16es de finale", roundShort:"H7", team1:"🏳️ Vainq. S15", team2:"🏳️ Vainq. S14", date:"07/07", time:"18:00" },
+  { id:1108, round:"16es de finale", roundShort:"H8", team1:"🏳️ Vainq. S13", team2:"🏳️ Vainq. S16", date:"07/07", time:"22:00" },
+  // ── Quarts de finale (4 matchs) ──
+  { id:1201, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H1", team2:"🏳️ Vainq. H2", date:"09/07", time:"22:00" },
+  { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H3", team2:"🏳️ Vainq. H4", date:"10/07", time:"02:00" },
+  { id:1203, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" },
+  { id:1204, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7", team2:"🏳️ Vainq. H8", date:"11/07", time:"02:00" },
+  // ── Demi-finales (2 matchs) ──
+  { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"14/07", time:"21:00" },
+  { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"15/07", time:"21:00" },
+  // ── Petite finale ──
+  { id:1401, round:"Petite finale", roundShort:"3P", team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"18/07", time:"21:00" },
+  // ── Finale ──
+  { id:1402, round:"Finale", roundShort:"🏆", team1:"🏳️ Vainq. SF1", team2:"🏳️ Vainq. SF2", date:"19/07", time:"21:00" },
 ];
 
 const ALL_KO_MATCHES = KNOCKOUT_MATCHES;
@@ -928,12 +957,23 @@ export default function CocoProno() {
   // ─── Calcul automatique des qualifiés ─────────────────
   const { groupStandings, qualified, thirds } = computeQualified(realScores);
 
-  // Résout un slot ("1A", "2B", "3e1"...) en nom d'équipe
+  // Résout un slot ("1A", "2B", "3e1", "W1001", "L1301"...) en nom d'équipe
   const resolveSlot = (slot) => {
     if (!slot) return null;
     if (slot.startsWith("3e")) {
       const idx = parseInt(slot.replace("3e","")) - 1;
       return thirds[idx] || null;
+    }
+    if (slot.startsWith("W") || slot.startsWith("L")) {
+      const refId = parseInt(slot.slice(1));
+      const real = realScores[refId];
+      if (!real || real.s1 === real.s2) return null; // pas joué, ou égalité (TAB non géré auto)
+      const t1 = resolveKoTeam(refId, "team1");
+      const t2 = resolveKoTeam(refId, "team2");
+      if (!t1 || !t2) return null;
+      const winnerIsT1 = real.s1 > real.s2;
+      if (slot.startsWith("W")) return winnerIsT1 ? t1 : t2;
+      return winnerIsT1 ? t2 : t1; // L = perdant
     }
     return qualified[slot] || null;
   };
@@ -1387,11 +1427,12 @@ export default function CocoProno() {
           const inputStyle = { width:52, height:52, borderRadius:12, border:`2.5px solid ${G}`, background:"rgba(21,128,61,0.07)", textAlign:"center", fontSize:26, fontWeight:900, color:G, outline:"none", MozAppearance:"textfield" };
 
           const roundColors = {
-            "Huitièmes":     { bg:"rgba(30,58,90,0.9)",  color:"#38bdf8" },
-            "Quarts":        { bg:"rgba(26,26,74,0.9)",  color:"#818cf8" },
-            "Demi-finales":  { bg:"rgba(42,26,74,0.9)",  color:"#c084fc" },
-            "Petite finale": { bg:"rgba(26,42,26,0.9)",  color:"#4ade80" },
-            "Finale":        { bg:"rgba(58,32,0,0.9)",   color:"#fbbf24" },
+            "32es de finale": { bg:"rgba(20,50,70,0.9)",  color:"#7dd3fc" },
+            "16es de finale": { bg:"rgba(30,58,90,0.9)",  color:"#38bdf8" },
+            "Quarts":         { bg:"rgba(26,26,74,0.9)",  color:"#818cf8" },
+            "Demi-finales":   { bg:"rgba(42,26,74,0.9)",  color:"#c084fc" },
+            "Petite finale":  { bg:"rgba(26,42,26,0.9)",  color:"#4ade80" },
+            "Finale":         { bg:"rgba(58,32,0,0.9)",   color:"#fbbf24" },
           };
 
           const renderMatch = (m) => {
@@ -1578,7 +1619,8 @@ export default function CocoProno() {
           const bc = (id) => {
             const m = ALL_KO_MATCHES.find(x => x.id === id);
             if (!m) return <div key={id} style={{width:CW,height:CH,borderRadius:8,background:"rgba(255,255,255,0.2)",border:"1.5px dashed rgba(21,128,61,0.2)",flexShrink:0}} />;
-            const t1s = koTeams[m.id]?.team1||m.team1, t2s = koTeams[m.id]?.team2||m.team2;
+            const t1s = resolveKoTeam(id,"team1") || koTeams[m.id]?.team1 || m.team1;
+            const t2s = resolveKoTeam(id,"team2") || koTeams[m.id]?.team2 || m.team2;
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
             const real=realScores[m.id], pred=preds[me?`${me.id}_${m.id}`:null];
             const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
@@ -1648,10 +1690,10 @@ export default function CocoProno() {
 
           // Finale card
           const finaleCard = () => {
-            const m=ALL_KO_MATCHES.find(x=>x.id===1401);
-            const t1s=koTeams[1401]?.team1||m.team1, t2s=koTeams[1401]?.team2||m.team2;
+            const m=ALL_KO_MATCHES.find(x=>x.id===1402);
+            const t1s=resolveKoTeam(1402,"team1")||koTeams[1402]?.team1||m.team1, t2s=resolveKoTeam(1402,"team2")||koTeams[1402]?.team2||m.team2;
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
-            const real=realScores[1401], pred=preds[me?`${me.id}_1401`:null];
+            const real=realScores[1402], pred=preds[me?`${me.id}_1402`:null];
             const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
             return (
               <div style={{...card,padding:"16px",margin:"20px 0",background:"linear-gradient(135deg,rgba(251,191,36,0.22),rgba(245,158,11,0.12))",border:`2px solid ${meta?meta.hex:"rgba(251,191,36,0.55)"}`,boxShadow:"0 4px 20px rgba(251,191,36,0.2)"}}>
@@ -1693,16 +1735,23 @@ export default function CocoProno() {
               {bracketView ? (
                 /* ── VUE BRACKET ── */
                 <div>
-                  {label("Tableau A — Huitièmes H1→H8")}
-                  {buildHalf([[1001,1002],[1003,1004],[1005,1006],[1007,1008]],[1101,1102,1103,1104],[1201,1202])}
-                  {finaleCard()}
-                  {label("Tableau B — Huitièmes H9→H16")}
-                  {buildHalf([[1009,1010],[1011,1012],[1013,1014],[1015,1016]],[1105,1106,1107,1108],[1203,1204])}
-                  {/* Petites finales */}
+                  {label("Tableau A — 32es S1→S8")}
+                  {buildHalf([[1001,1004],[1003,1006],[1002,1005],[1007,1008]],[1101,1102,1103,1104],[1201,1202])}
+                  {label("Tableau B — 32es S9→S16")}
+                  {buildHalf([[1012,1011],[1010,1009],[1015,1014],[1013,1016]],[1105,1106,1107,1108],[1203,1204])}
+                  {/* Demi-finales — relient les 2 tableaux */}
                   <div style={{...card,padding:"12px 14px",marginTop:16}}>
-                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>🥉 Petites finales</div>
-                    <div style={{display:"flex",gap:8,overflowX:"auto"}}>
+                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>⚡ Demi-finales</div>
+                    <div style={{display:"flex",gap:8,overflowX:"auto",justifyContent:"center"}}>
                       {[1301,1302].map(id=><div key={id} style={{flexShrink:0}}>{bc(id)}</div>)}
+                    </div>
+                  </div>
+                  {finaleCard()}
+                  {/* Petite finale */}
+                  <div style={{...card,padding:"12px 14px",marginTop:12}}>
+                    <div style={{fontSize:10,fontWeight:700,color:MUTED,marginBottom:8,textAlign:"center"}}>🥉 Petite finale</div>
+                    <div style={{display:"flex",gap:8,overflowX:"auto",justifyContent:"center"}}>
+                      <div style={{flexShrink:0}}>{bc(1401)}</div>
                     </div>
                   </div>
                 </div>
@@ -1717,7 +1766,7 @@ export default function CocoProno() {
                         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                           <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
                           <div style={{padding:"6px 18px",borderRadius:20,background:rc.bg,color:rc.color,fontSize:13,fontWeight:800,border:`1px solid ${rc.color}55`,letterSpacing:0.5}}>
-                            {round==="Finale"?"🏆 ":round==="Demi-finales"?"⚡ ":round==="Quarts"?"🎯 ":round==="Huitièmes"?"⚽ ":"🥉 "}{round}
+                            {round==="Finale"?"🏆 ":round==="Demi-finales"?"⚡ ":round==="Quarts"?"🎯 ":round==="16es de finale"?"⚽ ":round==="32es de finale"?"🌍 ":"🥉 "}{round}
                           </div>
                           <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
                         </div>
@@ -2079,9 +2128,9 @@ export default function CocoProno() {
                 </div>
               )}
 
-              {/* Corrections manuelles huitièmes */}
-              <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Corrections manuelles (huitièmes)</div>
-              {ALL_KO_MATCHES.filter(m => m.round === "Huitièmes").map(m => {
+              {/* Corrections manuelles 32es de finale */}
+              <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Corrections manuelles (32es de finale)</div>
+              {ALL_KO_MATCHES.filter(m => m.round === "32es de finale").map(m => {
                 const autoT1 = resolveKoTeam(m.id, "team1");
                 const autoT2 = resolveKoTeam(m.id, "team2");
                 return (
