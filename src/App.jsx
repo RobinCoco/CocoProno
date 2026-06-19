@@ -75,7 +75,7 @@ const MATCH_SCHEDULE = {
   // ── Groupe B — Canada(0) Bosnie(1) Qatar(2) Suisse(3) ─────────────────────
   7:{date:"12/06",time:"21:00"}, // J1p0 Canada-Bosnie ✓
   8:{date:"13/06",time:"21:00"}, // J1p1 Qatar-Suisse ✓
-  9:{date:"19/06",time:"21:00"}, // J2p0 Canada-Qatar (approx)
+  9:{date:"19/06",time:"00:00"}, // J2p0 Canada-Qatar ✓ (nuit du 18 au 19/06)
  10:{date:"18/06",time:"21:00"}, // J2p1 Bosnie-Suisse ✓
  11:{date:"24/06",time:"21:00"}, // J3p0 Canada-Suisse ✓
  12:{date:"24/06",time:"21:00"}, // J3p1 Bosnie-Qatar ✓
