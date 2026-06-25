@@ -2370,7 +2370,25 @@ export default function CocoProno() {
                 setView("matches");
               };
 
-              const existingCount = Object.keys(preds).filter(k => k.startsWith(iaKey+"_")).length;
+              const saveIaWinner = async (matchId, winner) => {
+                await ensureIaPlayer();
+                const val = winner === "team1" ? { s1:1, s2:0 } : { s1:0, s2:1 };
+                const k = `${iaKey}_${matchId + KO_WINNER_OFFSET}`;
+                setPreds(prev => ({ ...prev, [k]: val }));
+                if (storageMode.current === "supabase") {
+                  await sbUpsert("predictions", { player_id: iaKey, match_id: matchId + KO_WINNER_OFFSET, score1: val.s1, score2: val.s2 });
+                } else {
+                  await storageSave("cp_preds", { ...predsRef.current, [k]: val });
+                }
+              };
+
+              const existingCount = Object.keys(preds).filter(k => k.startsWith(iaKey+"_") && parseInt(k.split("_")[1]) < KO_WINNER_OFFSET).length;
+
+              // Tous les matchs à afficher (groupes + KO)
+              const allMatchesToShow = [
+                ...ALL_MATCHES.filter(m => filterMD==="all" || m.md===+filterMD),
+                ...(filterMD==="all" ? ALL_KO_MATCHES : []),
+              ];
 
               return (
                 <div>
@@ -2380,7 +2398,7 @@ export default function CocoProno() {
                       <div style={{ width:46, height:46, borderRadius:"50%", background:"linear-gradient(135deg,#fbbf24,#f59e0b)", display:"flex", alignItems:"center", justifyContent:"center", fontSize:22, flexShrink:0 }}>🦜</div>
                       <div style={{ flex:1 }}>
                         <div style={{ fontWeight:900, fontSize:15, color:TEXT }}>CocoProno IA</div>
-                        <div style={{ fontSize:12, color:MUTED }}>{existingCount}/72 pronostics saisis</div>
+                        <div style={{ fontSize:12, color:MUTED }}>{existingCount}/{ALL_MATCHES.length + ALL_KO_MATCHES.length} pronostics saisis</div>
                       </div>
                       <div style={{ display:"flex", flexDirection:"column", gap:6 }}>
                         <button style={{ ...btnS("primary"), padding:"8px 14px", fontSize:12, background:"linear-gradient(135deg,#fbbf24,#f59e0b)", color:"#0f2d12", fontWeight:900 }}
@@ -2412,12 +2430,20 @@ export default function CocoProno() {
                     ))}
                   </div>
 
-                  {ALL_MATCHES.filter(m => filterMD==="all" || m.md===+filterMD).map(m => {
+                  {allMatchesToShow.map(m => {
                     const k = `${iaKey}_${m.id}`;
                     const pred = preds[k];
-                    const t1 = splitTeam(m.team1), t2 = splitTeam(m.team2);
+                    const isKo = m.id >= 1001;
+                    const t1 = splitTeam(isKo ? (resolveKoTeam(m.id,"team1")||m.team1) : m.team1);
+                    const t2 = splitTeam(isKo ? (resolveKoTeam(m.id,"team2")||m.team2) : m.team2);
                     const real = realScores[m.id];
-                    const pts = calcPts(pred, real);
+                    const realW = isKo ? realScores[m.id + KO_WINNER_OFFSET] : null;
+                    const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+                    const iaWinnerRaw = preds[`${iaKey}_${m.id + KO_WINNER_OFFSET}`];
+                    const iaWinner = iaWinnerRaw ? (iaWinnerRaw.s1 > iaWinnerRaw.s2 ? "team1" : "team2") : null;
+                    const pts = isKo
+                      ? calcPtsKO(pred, real, iaWinner, realWinner)
+                      : calcPts(pred, real);
                     const meta = pts !== null ? ptsMeta(pts) : null;
                     const inputSt = (hasPred) => ({ width:50, height:50, borderRadius:12, border:`2.5px solid ${hasPred?"#fbbf24":"rgba(251,191,36,0.25)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" });
                     return (
@@ -2425,8 +2451,11 @@ export default function CocoProno() {
                         borderLeft: meta ? `4px solid ${meta.hex}` : pred ? "4px solid #fbbf24" : "4px solid rgba(251,191,36,0.15)" }}>
                         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                           <div style={{ display:"flex", gap:6 }}>
-                            <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(21,128,61,0.12)", color:G }}>{m.group}</span>
-                            <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(180,83,9,0.1)", color:GOLD }}>J{m.md}</span>
+                            {isKo
+                              ? <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(251,191,36,0.15)", color:"#b45309" }}>{m.roundShort}</span>
+                              : <><span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(21,128,61,0.12)", color:G }}>{m.group}</span>
+                                 <span style={{ padding:"2px 8px", borderRadius:6, fontSize:11, fontWeight:700, background:"rgba(180,83,9,0.1)", color:GOLD }}>J{m.md}</span></>
+                            }
                           </div>
                           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                             {meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
@@ -2456,6 +2485,32 @@ export default function CocoProno() {
                               style={inputSt(!!pred)} />
                           </div>
                         </div>
+
+                        {/* Sélecteur qualifié pour les matchs KO */}
+                        {isKo && (
+                          <div style={{ marginTop:10, paddingTop:8, borderTop:"1px dashed rgba(251,191,36,0.25)" }}>
+                            <div style={{ fontSize:9, fontWeight:800, color:"#b45309", textAlign:"center", marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>
+                              🏆 Qualifié ? <span style={{ color:MUTED, fontWeight:600 }}>(+2pts)</span>
+                            </div>
+                            <div style={{ display:"flex", gap:6 }}>
+                              {[["team1",t1],["team2",t2]].map(([side,t]) => (
+                                <button key={side} onClick={() => saveIaWinner(m.id, side)}
+                                  style={{
+                                    flex:1, padding:"6px 4px", borderRadius:8, border:"none", cursor:"pointer",
+                                    fontWeight:800, fontSize:10, transition:"all 0.15s",
+                                    background: iaWinner===side
+                                      ? (realWinner ? (realWinner===side?"#15803d":"#dc2626") : "#b45309")
+                                      : "rgba(255,255,255,0.85)",
+                                    color: iaWinner===side ? "#fff" : "#3a2a00",
+                                    display:"flex", alignItems:"center", justifyContent:"center", gap:4,
+                                  }}>
+                                  <span style={{ fontSize:14 }}>{t.emoji}</span>
+                                  <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:55 }}>{t.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     );
                   })}
