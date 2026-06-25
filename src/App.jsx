@@ -1661,9 +1661,9 @@ export default function CocoProno() {
                         flex:1, padding:"8px 6px", borderRadius:10, border:"none", cursor: locked ? "default" : "pointer",
                         fontWeight:800, fontSize:12, transition:"all 0.15s",
                         background: selW===side
-                          ? (realWinner ? (realWinner===side?"#15803d":"#dc2626") : "rgba(21,128,61,0.85)")
-                          : "rgba(255,255,255,0.12)",
-                        color: selW===side ? "#fff" : "rgba(255,255,255,0.5)",
+                          ? (realWinner ? (realWinner===side ? "#15803d" : "#dc2626") : "#15803d")
+                          : "rgba(255,255,255,0.85)",
+                        color: selW===side ? "#fff" : "#1a3a1a",
                         boxShadow: selW===side ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
                         display:"flex", alignItems:"center", justifyContent:"center", gap:5,
                         opacity: locked && !selW ? 0.5 : 1,
