@@ -338,12 +338,43 @@ function calcPts(pred, real) {
   return 2;
 }
 
+// Barème phase finale (Option A) :
+// Score 90min : 3pts exact / 2pts bon écart / 1pt bon résultat
+// Bonus qualifié : +2pts si bonne équipe sélectionnée
+// Total max = 5pts
+// L'offset 10000 encode le "vainqueur" dans une entrée predictions séparée :
+//   preds[`${playerId}_${matchId + KO_WINNER_OFFSET}`] = { s1:1, s2:0 } → team1
+//   preds[`${playerId}_${matchId + KO_WINNER_OFFSET}`] = { s1:0, s2:1 } → team2
+const KO_WINNER_OFFSET = 10000;
+
+function calcPtsKO(predScore, realScore, predWinner, realWinner) {
+  if (!predScore || !realScore) return null;
+  const { s1: ps1, s2: ps2 } = predScore;
+  const { s1: rs1, s2: rs2 } = realScore;
+  let pts = 0;
+  // Score à 90min (max 3pts)
+  if (ps1 === rs1 && ps2 === rs2) {
+    pts += 3;
+  } else {
+    const po = ps1 > ps2 ? 1 : ps1 < ps2 ? 2 : 0;
+    const ro = rs1 > rs2 ? 1 : rs1 < rs2 ? 2 : 0;
+    if (po === ro) {
+      if ((ps1 - ps2) === (rs1 - rs2)) pts += 2;
+      else pts += 1;
+    }
+  }
+  // Bonus vainqueur/qualifié (max 2pts)
+  if (predWinner && realWinner && predWinner === realWinner) pts += 2;
+  return pts;
+}
+
 function ptsMeta(pts) {
-  if (pts === 5) return { icon:"🏆", label:"Score exact",       color:"green", hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
-  if (pts === 4) return { icon:"🎯", label:"Bon écart",         color:"teal",  hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
-  if (pts === 3) return { icon:"⚡", label:"Buts partiels",     color:"blue",  hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
-  if (pts === 2) return { icon:"✔",  label:"Bon résultat",      color:"gold",  hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
-  if (pts === 0) return { icon:"❌", label:"Raté",              color:"red",   hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
+  if (pts === 5) return { icon:"🏆", label:"Score exact + qualifié", color:"green", hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
+  if (pts === 4) return { icon:"🎯", label:"Bon écart + qualifié",   color:"teal",  hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
+  if (pts === 3) return { icon:"⚡", label:"Bon résultat + qualifié",color:"blue",  hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
+  if (pts === 2) return { icon:"✔",  label:"Bon résultat",           color:"gold",  hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
+  if (pts === 1) return { icon:"➕", label:"+1pt",                    color:"gray",  hex:"#6b7280", bg:"rgba(107,114,128,0.10)",border:"rgba(107,114,128,0.3)"};
+  if (pts === 0) return { icon:"❌", label:"Raté",                    color:"red",   hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
   return null;
 }
 
@@ -539,7 +570,7 @@ export default function CocoProno() {
     const kickoffUTC = Date.UTC(2026, mo - 1, d, h - 2, mi);
     return Date.now() >= kickoffUTC;
   };
-  const [rInput, setRInput] = useState({ s1:0, s2:0 });
+  const [rInput, setRInput] = useState({ s1:0, s2:0, winner:null });
   const [adminPin, setAdminPin] = useState("");
   const [adminOk, setAdminOk] = useState(false);
   const [adminErr, setAdminErr] = useState(false);
@@ -879,9 +910,27 @@ export default function CocoProno() {
     }
   };
 
+  const saveWinner = async (matchId, winner) => {
+    if (!me) return;
+    // Encode : team1 → { s1:1, s2:0 }, team2 → { s1:0, s2:1 }
+    const val = winner === "team1" ? { s1:1, s2:0 } : { s1:0, s2:1 };
+    const k = `${me.id}_${matchId + KO_WINNER_OFFSET}`;
+    setPreds(prev => ({ ...prev, [k]: val }));
+    if (storageMode.current === "supabase") {
+      await sbWithRetry(() =>
+        sbUpsert("predictions", { player_id: me.id, match_id: matchId + KO_WINNER_OFFSET, score1: val.s1, score2: val.s2 })
+      ).catch(e => console.warn("saveWinner:", e));
+    } else {
+      storageSave("cp_preds", { ...predsRef.current, [k]: val });
+    }
+  };
+
   const openReal = (m) => {
     const r = realScores[m.id];
-    setRInput(r ? { s1:r.s1, s2:r.s2 } : { s1:0, s2:0 });
+    setRInput(r ? { s1:r.s1, s2:r.s2, winner: (() => {
+      const w = realScores[m.id + KO_WINNER_OFFSET];
+      return w ? (w.s1 > w.s2 ? "team1" : "team2") : null;
+    })() } : { s1:0, s2:0, winner:null });
     setEditReal(m);
   };
 
@@ -891,6 +940,12 @@ export default function CocoProno() {
     setEditReal(null);
     if (storageMode.current === "supabase") {
       await sbUpsert("real_scores", { match_id: editReal.id, score1: rInput.s1, score2: rInput.s2 });
+      // Matchs KO : sauvegarde du vainqueur (TAB, prolongations)
+      if (editReal.id >= 1001 && rInput.winner) {
+        const wVal = rInput.winner === "team1" ? { s1:1, s2:0 } : { s1:0, s2:1 };
+        await sbUpsert("real_scores", { match_id: editReal.id + KO_WINNER_OFFSET, score1: wVal.s1, score2: wVal.s2 });
+        setRealScores(prev => ({ ...prev, [editReal.id + KO_WINNER_OFFSET]: wVal }));
+      }
     } else {
       await storageSave("cp_scores", next);
     }
@@ -929,8 +984,18 @@ export default function CocoProno() {
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
       const pred = effectivePreds[`${p.id}_${m.id}`];
       const real = realScores[m.id];
-      const n = calcPts(pred, real);
-      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n===2) correct++; }
+      let n;
+      if (m.id >= 1001) {
+        // Match KO : barème Option A
+        const predW = effectivePreds[`${p.id}_${m.id + KO_WINNER_OFFSET}`];
+        const realW = realScores[m.id + KO_WINNER_OFFSET];
+        const predWinner = predW ? (predW.s1 > predW.s2 ? "team1" : "team2") : null;
+        const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+        n = calcPtsKO(pred, real, predWinner, realWinner);
+      } else {
+        n = calcPts(pred, real);
+      }
+      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n>=1) correct++; }
     });
     return { ...p, pts, exact, ecart, partial, correct };
   });
@@ -943,8 +1008,17 @@ export default function CocoProno() {
     [...ALL_MATCHES, ...ALL_KO_MATCHES].forEach(m => {
       const pred = effectivePreds[`${iaId}_${m.id}`] || (iaId === "__ai__" ? AI_PREDS[m.id] : null);
       const real = realScores[m.id];
-      const n = calcPts(pred, real);
-      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n===2) correct++; }
+      let n;
+      if (m.id >= 1001) {
+        const predW = effectivePreds[`${iaId}_${m.id + KO_WINNER_OFFSET}`];
+        const realW = realScores[m.id + KO_WINNER_OFFSET];
+        const predWinner = predW ? (predW.s1 > predW.s2 ? "team1" : "team2") : null;
+        const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+        n = calcPtsKO(pred, real, predWinner, realWinner);
+      } else {
+        n = calcPts(pred, real);
+      }
+      if (n !== null) { pts += n; if(n===5) exact++; else if(n===4) ecart++; else if(n===3) partial++; else if(n>=1) correct++; }
     });
     return { id: iaId, name:"CocoProno IA", avatar:"🦜", isAI:true, pts, exact, ecart, partial, correct };
   })();
@@ -952,7 +1026,18 @@ export default function CocoProno() {
   const leaderboard = [...humanPlayers, aiEntry].sort((a,b) => b.pts - a.pts || b.exact - a.exact || b.ecart - a.ecart);
 
   const myPred = (m) => effectivePreds[me ? `${me.id}_${m.id}` : null];
-  const myPts  = (m) => calcPts(myPred(m), realScores[m.id]);
+  const myWinner = (m) => {
+    const w = effectivePreds[me ? `${me.id}_${m.id + KO_WINNER_OFFSET}` : null];
+    return w ? (w.s1 > w.s2 ? "team1" : "team2") : null;
+  };
+  const myPts = (m) => {
+    if (m.id >= 1001) {
+      const realW = realScores[m.id + KO_WINNER_OFFSET];
+      const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+      return calcPtsKO(myPred(m), realScores[m.id], myWinner(m), realWinner);
+    }
+    return calcPts(myPred(m), realScores[m.id]);
+  };
 
   // ─── Calcul automatique des qualifiés ─────────────────
   const { groupStandings, qualified, thirds } = computeQualified(realScores);
@@ -1561,6 +1646,45 @@ export default function CocoProno() {
                     )}
                   </div>
                 </div>
+
+                {/* Sélecteur "Qui se qualifie ?" — uniquement pour les matchs KO */}
+                {isKo && (
+                  <div style={{ marginTop:10, paddingTop:10, borderTop:"1px dashed rgba(21,128,61,0.2)" }}>
+                    <div style={{ fontSize:10, fontWeight:800, color:MUTED, textAlign:"center", marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>
+                      🏆 Qui se qualifie ? <span style={{ fontSize:9, color:"rgba(21,128,61,0.6)" }}>(+2pts bonus)</span>
+                    </div>
+                    {(() => {
+                      const selW = myWinner(m);
+                      const realW = realScores[m.id + KO_WINNER_OFFSET];
+                      const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+                      const btnStyle = (side) => ({
+                        flex:1, padding:"8px 6px", borderRadius:10, border:"none", cursor: locked ? "default" : "pointer",
+                        fontWeight:800, fontSize:12, transition:"all 0.15s",
+                        background: selW===side
+                          ? (realWinner ? (realWinner===side?"#15803d":"#dc2626") : "rgba(21,128,61,0.85)")
+                          : "rgba(255,255,255,0.12)",
+                        color: selW===side ? "#fff" : "rgba(255,255,255,0.5)",
+                        boxShadow: selW===side ? "0 2px 8px rgba(0,0,0,0.25)" : "none",
+                        display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+                        opacity: locked && !selW ? 0.5 : 1,
+                      });
+                      return (
+                        <div style={{ display:"flex", gap:8 }}>
+                          <button style={btnStyle("team1")} onClick={() => !locked && saveWinner(m.id, "team1")}>
+                            <span style={{ fontSize:16 }}>{t1.emoji}</span>
+                            <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:70 }}>{t1.name}</span>
+                            {realWinner==="team1" && <span>✓</span>}
+                          </button>
+                          <button style={btnStyle("team2")} onClick={() => !locked && saveWinner(m.id, "team2")}>
+                            {realWinner==="team2" && <span>✓</span>}
+                            <span style={{ overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", maxWidth:70 }}>{t2.name}</span>
+                            <span style={{ fontSize:16 }}>{t2.emoji}</span>
+                          </button>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                )}
               </div>
             );
           };
@@ -2411,6 +2535,30 @@ export default function CocoProno() {
                 />
               </div>
             </div>
+
+            {/* Sélecteur vainqueur — uniquement pour les matchs KO */}
+            {editReal.id >= 1001 && (
+              <div style={{ marginBottom:16, padding:"12px", background:"rgba(180,83,9,0.07)", borderRadius:12, border:"1px solid rgba(180,83,9,0.2)" }}>
+                <div style={{ fontSize:10, fontWeight:800, color:"#b45309", textAlign:"center", marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>
+                  🏆 Qui se qualifie ?
+                  <span style={{ fontSize:9, color:MUTED, display:"block", fontWeight:600, marginTop:2, textTransform:"none" }}>Score = 90min · Qualifié = vainqueur final (incl. TAB)</span>
+                </div>
+                <div style={{ display:"flex", gap:8 }}>
+                  {[["team1", editReal.team1], ["team2", editReal.team2]].map(([side, name]) => (
+                    <button key={side} onClick={() => setRInput(p => ({ ...p, winner: side }))}
+                      style={{
+                        flex:1, padding:"8px 6px", borderRadius:10, border:`1.5px solid ${rInput.winner===side?"#b45309":"rgba(0,0,0,0.12)"}`,
+                        cursor:"pointer", fontWeight:800, fontSize:11,
+                        background: rInput.winner===side ? "rgba(180,83,9,0.15)" : "rgba(0,0,0,0.04)",
+                        color: rInput.winner===side ? "#b45309" : "#666",
+                      }}>
+                      {splitTeam(name).emoji} {splitTeam(name).name}
+                      {rInput.winner===side && " ✓"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div style={{ display:"flex", gap:10 }}>
               <button style={{ ...btnS("ghost"), flex:1, border:"1px solid rgba(0,0,0,0.15)" }} onClick={()=>setEditReal(null)}>Annuler</button>
               <button style={{ ...btnS("gold"), flex:2 }} onClick={saveReal} disabled={rInput.s1===""||rInput.s2===""}>Enregistrer</button>
