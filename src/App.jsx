@@ -1524,12 +1524,20 @@ export default function CocoProno() {
 
           const renderMatch = (m) => {
             const isKo = m.id >= 1001;
-            const t1str = isKo
-              ? (resolveKoTeam(m.id, "team1") || koTeams[m.id]?.team1 || m.team1)
-              : m.team1;
-            const t2str = isKo
-              ? (resolveKoTeam(m.id, "team2") || koTeams[m.id]?.team2 || m.team2)
-              : m.team2;
+            // Résolution des équipes KO :
+            // 1. Override manuel admin (koTeams)
+            // 2. Nom hardcodé dans KNOCKOUT_MATCHES si ce n'est pas un placeholder "🏳️"
+            // 3. Auto-résolution depuis computeQualified (si placeholder)
+            const isPlaceholder = (s) => !s || s.startsWith("🏳️");
+            const resolveTeam = (side) => {
+              const manual = koTeams[m.id]?.[side];
+              if (manual && manual.trim()) return manual;
+              const hardcoded = side === "team1" ? m.team1 : m.team2;
+              if (!isPlaceholder(hardcoded)) return hardcoded;
+              return resolveKoTeam(m.id, side) || hardcoded;
+            };
+            const t1str = isKo ? resolveTeam("team1") : m.team1;
+            const t2str = isKo ? resolveTeam("team2") : m.team2;
             const t1 = splitTeam(t1str);
             const t2 = splitTeam(t2str);
             const pred = myPred(m);
@@ -1745,8 +1753,14 @@ export default function CocoProno() {
           const bc = (id, opts = {}) => {
             const m = ALL_KO_MATCHES.find(x => x.id === id);
             if (!m) return <div style={{width:CW,height:CH,borderRadius:10,background:"rgba(255,255,255,0.08)",border:"1.5px dashed rgba(255,255,255,0.15)"}} />;
-            const t1s = resolveKoTeam(id,"team1") || koTeams[m.id]?.team1 || m.team1;
-            const t2s = resolveKoTeam(id,"team2") || koTeams[m.id]?.team2 || m.team2;
+            const isPhld = (s) => !s || s.startsWith("🏳️");
+            const resTeam = (side) => {
+              const man = koTeams[m.id]?.[side]; if (man?.trim()) return man;
+              const hc = side==="team1"?m.team1:m.team2;
+              if (!isPhld(hc)) return hc;
+              return resolveKoTeam(id, side) || hc;
+            };
+            const t1s = resTeam("team1"); const t2s = resTeam("team2");
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
             const real=realScores[m.id], pred=preds[me?`${me.id}_${m.id}`:null];
             const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
@@ -2286,8 +2300,9 @@ export default function CocoProno() {
               {/* Corrections manuelles 32es de finale */}
               <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Corrections manuelles (32es de finale)</div>
               {ALL_KO_MATCHES.filter(m => m.round === "32es de finale").map(m => {
-                const autoT1 = resolveKoTeam(m.id, "team1");
-                const autoT2 = resolveKoTeam(m.id, "team2");
+                const isPhldAdm = (s) => !s || s.startsWith("🏳️");
+                const autoT1 = isPhldAdm(m.team1) ? resolveKoTeam(m.id, "team1") : m.team1;
+                const autoT2 = isPhldAdm(m.team2) ? resolveKoTeam(m.id, "team2") : m.team2;
                 return (
                   <div key={m.id} style={{ ...card, padding:"10px 12px", marginBottom:8 }}>
                     <div style={{ fontSize:10, fontWeight:700, color:MUTED, marginBottom:6 }}>{m.roundShort} · {m.date}/2026</div>
@@ -2436,8 +2451,15 @@ export default function CocoProno() {
                     const k = `${iaKey}_${m.id}`;
                     const pred = preds[k];
                     const isKo = m.id >= 1001;
-                    const t1 = splitTeam(isKo ? (resolveKoTeam(m.id,"team1")||m.team1) : m.team1);
-                    const t2 = splitTeam(isKo ? (resolveKoTeam(m.id,"team2")||m.team2) : m.team2);
+                    const isPhldIA = (s) => !s || s.startsWith("🏳️");
+                    const resIA = (side) => {
+                      const man = koTeams[m.id]?.[side]; if (man?.trim()) return man;
+                      const hc = side==="team1"?m.team1:m.team2;
+                      if (!isPhldIA(hc)) return hc;
+                      return resolveKoTeam(m.id, side) || hc;
+                    };
+                    const t1 = splitTeam(isKo ? resIA("team1") : m.team1);
+                    const t2 = splitTeam(isKo ? resIA("team2") : m.team2);
                     const real = realScores[m.id];
                     const realW = isKo ? realScores[m.id + KO_WINNER_OFFSET] : null;
                     const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
