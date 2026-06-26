@@ -91,8 +91,8 @@ const MATCH_SCHEDULE = {
  20:{date:"14/06",time:"06:00"}, // J1p1 Australie-Turquie ✓
  21:{date:"19/06",time:"19:00"}, // J2p0 USA-Australie (approx)
  22:{date:"20/06",time:"05:00"}, // J2p1 Paraguay-Turquie ✓
- 23:{date:"26/06",time:"22:00"}, // J3p0 USA-Turquie (approx)
- 24:{date:"26/06",time:"22:00"}, // J3p1 Paraguay-Australie (approx)
+ 23:{date:"26/06",time:"04:00"}, // J3p0 USA-Turquie ✓ (Los Angeles, 4h)
+ 24:{date:"26/06",time:"04:00"}, // J3p1 Paraguay-Australie ✓
   // ── Groupe E — Allemagne(0) Curaçao(1) CIvoire(2) Équateur(3) ────────────
  25:{date:"14/06",time:"19:00"}, // J1p0 Allemagne-Curaçao ✓
  26:{date:"15/06",time:"01:00"}, // J1p1 CIvoire-Équateur ✓
@@ -112,8 +112,8 @@ const MATCH_SCHEDULE = {
  38:{date:"16/06",time:"03:00"}, // J1p1 Iran-NvlZélande ✓ (était 15/06 ← CORRIGÉ)
  39:{date:"21/06",time:"21:00"}, // J2p0 Belgique-Iran ✓
  40:{date:"22/06",time:"03:00"}, // J2p1 Égypte-NvlZélande ✓
- 41:{date:"27/06",time:"21:00"}, // J3p0 Belgique-NvlZélande (approx)
- 42:{date:"27/06",time:"21:00"}, // J3p1 Égypte-Iran (approx)
+ 41:{date:"27/06",time:"05:00"}, // J3p0 Belgique-NvlZélande ✓ (Vancouver, 5h)
+ 42:{date:"27/06",time:"05:00"}, // J3p1 Égypte-Iran ✓
   // ── Groupe H — Espagne(0) CapVert(1) ArbSaoud(2) Uruguay(3) ─────────────
  43:{date:"15/06",time:"18:00"}, // J1p0 Espagne-CapVert ✓ (était 14/06 ← CORRIGÉ)
  44:{date:"16/06",time:"00:00"}, // J1p1 ArbSaoud-Uruguay ✓ (était 15/06 ← CORRIGÉ)
@@ -133,8 +133,8 @@ const MATCH_SCHEDULE = {
  56:{date:"17/06",time:"06:00"}, // J1p1 Autriche-Jordanie ✓
  57:{date:"22/06",time:"19:00"}, // J2p0 Argentine-Autriche ✓
  58:{date:"23/06",time:"05:00"}, // J2p1 Algérie-Jordanie ✓
- 59:{date:"28/06",time:"03:00"}, // J3p0 Argentine-Jordanie (approx)
- 60:{date:"28/06",time:"03:00"}, // J3p1 Algérie-Autriche (approx)
+ 59:{date:"28/06",time:"04:00"}, // J3p0 Argentine-Jordanie ✓ (Dallas, 4h)
+ 60:{date:"28/06",time:"04:00"}, // J3p1 Algérie-Autriche ✓ (Kansas City, 4h)
   // ── Groupe K — Portugal(0) RDCongo(1) Ouzbékistan(2) Colombie(3) ─────────
  61:{date:"17/06",time:"19:00"}, // J1p0 Portugal-RDCongo ✓
  62:{date:"18/06",time:"04:00"}, // J1p1 Ouzbékistan-Colombie ✓
@@ -222,92 +222,94 @@ function computeQualified(realScores) {
   return { groupStandings, qualified, thirds };
 }
 
-// Mapping des 32es de finale → slots qualifiés (selon tirage officiel FIFA 2026)
-// 8 des 16 matchs opposent un 1er à un "meilleur 3e" (3e1 = meilleur 3e, ... 3e8 = moins bon des 8)
+// Grille officielle FIFA 2026 — source : coupedumonde2026.net
+// Les "3e" sont assignés selon l'annexe C FIFA (dépend des groupes qualifiés)
 const KO_SLOT_MAP = {
+  // 32es — teams connues déjà renseignées dans team1/team2 de KNOCKOUT_MATCHES
+  // Les slots auto pour les équipes encore inconnues :
   1001: { t1:"2A", t2:"2B" },
-  1002: { t1:"1C", t2:"2F" },
-  1003: { t1:"1E", t2:"3e1" },
-  1004: { t1:"1F", t2:"2C" },
-  1005: { t1:"2E", t2:"2I" },
-  1006: { t1:"1I", t2:"3e2" },
-  1007: { t1:"1A", t2:"3e3" },
-  1008: { t1:"1L", t2:"3e4" },
-  1009: { t1:"1G", t2:"3e5" },
-  1010: { t1:"1D", t2:"3e6" },
-  1011: { t1:"1H", t2:"2J" },
-  1012: { t1:"2K", t2:"2L" },
-  1013: { t1:"1B", t2:"3e7" },
-  1014: { t1:"2D", t2:"2G" },
-  1015: { t1:"1J", t2:"2H" },
-  1016: { t1:"1K", t2:"3e8" },
-  // 16es de finale → vainqueurs des 32es
-  1101: { t1:"W1001", t2:"W1004" },
-  1102: { t1:"W1003", t2:"W1006" },
-  1103: { t1:"W1002", t2:"W1005" },
-  1104: { t1:"W1007", t2:"W1008" },
-  1105: { t1:"W1012", t2:"W1011" },
-  1106: { t1:"W1010", t2:"W1009" },
-  1107: { t1:"W1015", t2:"W1014" },
-  1108: { t1:"W1013", t2:"W1016" },
+  1002: { t1:"1E", t2:"3e1" },   // 3e from A/B/C/D/F
+  1003: { t1:"1F", t2:"2C" },
+  1004: { t1:"1C", t2:"2F" },
+  1005: { t1:"1I", t2:"3e2" },   // 3e from C/D/F/G/H
+  1006: { t1:"2E", t2:"2I" },
+  1007: { t1:"1A", t2:"3e3" },   // 3e from C/E/F/H/I
+  1008: { t1:"1L", t2:"3e4" },   // 3e from E/H/I/J/K
+  1009: { t1:"1D", t2:"3e5" },   // 3e from B/E/F/I/J
+  1010: { t1:"1G", t2:"3e6" },   // 3e from A/E/H/I/J
+  1011: { t1:"2K", t2:"2L" },
+  1012: { t1:"1H", t2:"2J" },
+  1013: { t1:"1B", t2:"3e7" },   // 3e from E/F/G/I/J
+  1014: { t1:"1J", t2:"2H" },
+  1015: { t1:"1K", t2:"3e8" },   // 3e from D/E/I/J/L
+  1016: { t1:"2D", t2:"2G" },
+  // 16es → vainqueurs des 32es (selon bracket officiel)
+  1101: { t1:"W1001", t2:"W1003" }, // N°90 : Vainq(AfrSud/Can) vs Vainq(PBas/Mar)
+  1102: { t1:"W1002", t2:"W1005" }, // N°89 : Vainq(All/3e)     vs Vainq(Fra/3e)
+  1103: { t1:"W1004", t2:"W1006" }, // N°91 : Vainq(Bré/Jap)    vs Vainq(CIv/Nor)
+  1104: { t1:"W1007", t2:"W1008" }, // N°92 : Vainq(Mex/3e)     vs Vainq(1L/3e)
+  1105: { t1:"W1011", t2:"W1012" }, // N°93 : Vainq(2K/2L)      vs Vainq(1H/2J)
+  1106: { t1:"W1009", t2:"W1010" }, // N°94 : Vainq(USA/3e)     vs Vainq(1G/3e)
+  1107: { t1:"W1014", t2:"W1016" }, // N°95 : Vainq(Arg/2H)     vs Vainq(Aus/2G)
+  1108: { t1:"W1013", t2:"W1015" }, // N°96 : Vainq(Sui/3e)     vs Vainq(1K/3e)
   // Quarts → vainqueurs des 16es
-  1201: { t1:"W1101", t2:"W1102" },
-  1202: { t1:"W1103", t2:"W1104" },
-  1203: { t1:"W1105", t2:"W1106" },
-  1204: { t1:"W1107", t2:"W1108" },
-  // Demi-finales → vainqueurs des quarts
-  1301: { t1:"W1201", t2:"W1202" },
-  1302: { t1:"W1203", t2:"W1204" },
-  // Petite finale → perdants des demies
-  1401: { t1:"L1301", t2:"L1302" },
-  // Finale → vainqueurs des demies
-  1402: { t1:"W1301", t2:"W1302" },
+  1201: { t1:"W1102", t2:"W1101" }, // N°97
+  1202: { t1:"W1105", t2:"W1106" }, // N°98
+  1203: { t1:"W1103", t2:"W1104" }, // N°99
+  1204: { t1:"W1107", t2:"W1108" }, // N°100
+  // Demi-finales
+  1301: { t1:"W1201", t2:"W1202" }, // N°101
+  1302: { t1:"W1203", t2:"W1204" }, // N°102
+  // Petite finale
+  1401: { t1:"L1301", t2:"L1302" }, // N°103
+  // Finale
+  1402: { t1:"W1301", t2:"W1302" }, // N°104
 };
 
 
 // ─── Phase finale ─────────────────────────────────────
-// IDs 1001+ pour éviter les collisions avec les matchs de groupes
-// Format officiel FIFA 2026 (48 équipes) : 32es (16m) → 16es (8m) → 1/4 (4m) → 1/2 (2m) → Petite finale → Finale = 32 matchs
-// Sources vérifiées : footmercato, flashscore, eurosport, cnews (juin 2026)
+// Format officiel FIFA 2026 — 32es (16m) → 16es (8m) → QF (4m) → SF (2m) → 3P → F
+// Source : coupedumonde2026.net (26/06/2026) — heures heure de Paris
+// N° FIFA : 73-88 (32es), 89-96 (16es), 97-100 (QF), 101-102 (SF), 103 (3P), 104 (F)
 const KNOCKOUT_MATCHES = [
-  // ── 32es de finale (16 matchs, 32 équipes : 12×1ers + 12×2es + 8 meilleurs 3es) ──
-  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🏳️ 2e A", team2:"🏳️ 2e B",            date:"28/06", time:"21:00" },
-  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🏳️ 1er C", team2:"🏳️ 2e F",           date:"29/06", time:"19:00" },
-  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🏳️ 1er E", team2:"🏳️ 3e (A/B/C/D/F)",  date:"29/06", time:"22:30" },
-  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🏳️ 1er F", team2:"🏳️ 2e C",           date:"30/06", time:"03:00" },
-  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🏳️ 2e E", team2:"🏳️ 2e I",            date:"30/06", time:"19:00" },
-  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🏳️ 1er I", team2:"🏳️ 3e (C/D/F/G/H)",  date:"30/06", time:"23:00" },
-  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🏳️ 1er A", team2:"🏳️ 3e (C/E/F/H/I)",  date:"01/07", time:"03:00" },
-  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L", team2:"🏳️ 3e (E/H/I/J/K)",  date:"01/07", time:"18:00" },
-  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🏳️ 1er G", team2:"🏳️ 3e (A/E/H/I/J)",  date:"01/07", time:"22:00" },
-  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🏳️ 1er D", team2:"🏳️ 3e (B/E/F/I/J)",  date:"02/07", time:"02:00" },
-  { id:1011, round:"32es de finale", roundShort:"S11", team1:"🏳️ 1er H", team2:"🏳️ 2e J",           date:"02/07", time:"21:00" },
-  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🏳️ 2e K", team2:"🏳️ 2e L",            date:"03/07", time:"01:00" },
-  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🏳️ 1er B", team2:"🏳️ 3e (E/F/G/I/J)",  date:"03/07", time:"05:00" },
-  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🏳️ 2e D", team2:"🏳️ 2e G",            date:"03/07", time:"20:00" },
-  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er J", team2:"🏳️ 2e H",           date:"03/07", time:"23:00" },
-  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🏳️ 1er K", team2:"🏳️ 3e (D/E/I/J/L)",  date:"04/07", time:"03:30" },
-  // ── 16es de finale (8 matchs) ──
-  { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1",  team2:"🏳️ Vainq. S4",  date:"04/07", time:"19:00" },
-  { id:1102, round:"16es de finale", roundShort:"H2", team1:"🏳️ Vainq. S3",  team2:"🏳️ Vainq. S6",  date:"04/07", time:"23:00" },
-  { id:1103, round:"16es de finale", roundShort:"H3", team1:"🏳️ Vainq. S2",  team2:"🏳️ Vainq. S5",  date:"05/07", time:"22:00" },
-  { id:1104, round:"16es de finale", roundShort:"H4", team1:"🏳️ Vainq. S7",  team2:"🏳️ Vainq. S8",  date:"06/07", time:"02:00" },
-  { id:1105, round:"16es de finale", roundShort:"H5", team1:"🏳️ Vainq. S12", team2:"🏳️ Vainq. S11", date:"06/07", time:"21:00" },
-  { id:1106, round:"16es de finale", roundShort:"H6", team1:"🏳️ Vainq. S10", team2:"🏳️ Vainq. S9",  date:"07/07", time:"02:00" },
-  { id:1107, round:"16es de finale", roundShort:"H7", team1:"🏳️ Vainq. S15", team2:"🏳️ Vainq. S14", date:"07/07", time:"18:00" },
-  { id:1108, round:"16es de finale", roundShort:"H8", team1:"🏳️ Vainq. S13", team2:"🏳️ Vainq. S16", date:"07/07", time:"22:00" },
-  // ── Quarts de finale (4 matchs) ──
-  { id:1201, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H1", team2:"🏳️ Vainq. H2", date:"09/07", time:"22:00" },
-  { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H3", team2:"🏳️ Vainq. H4", date:"10/07", time:"02:00" },
-  { id:1203, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" },
-  { id:1204, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7", team2:"🏳️ Vainq. H8", date:"11/07", time:"02:00" },
-  // ── Demi-finales (2 matchs) ──
-  { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"14/07", time:"21:00" },
-  { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"15/07", time:"21:00" },
-  // ── Petite finale ──
-  { id:1401, round:"Petite finale", roundShort:"3P", team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"18/07", time:"21:00" },
-  // ── Finale ──
-  { id:1402, round:"Finale", roundShort:"🏆", team1:"🏳️ Vainq. SF1", team2:"🏳️ Vainq. SF2", date:"19/07", time:"21:00" },
+  // ── 32es de finale ────────────────────────────────────────────────────────
+  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🇿🇦 Afrique du Sud",  team2:"🇨🇦 Canada",             date:"28/06", time:"21:00" }, // N°73
+  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🇩🇪 Allemagne",        team2:"🏳️ 3e (A/B/C/D/F)",    date:"29/06", time:"22:30" }, // N°74
+  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🇳🇱 Pays-Bas",         team2:"🇲🇦 Maroc",             date:"30/06", time:"03:00" }, // N°75
+  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",             date:"29/06", time:"19:00" }, // N°76
+  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🏳️ 3e (C/D/F/G/H)",    date:"30/06", time:"23:00" }, // N°77
+  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",           date:"30/06", time:"19:00" }, // N°78
+  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🏳️ 3e (C/E/F/H/I)",    date:"01/07", time:"03:00" }, // N°79
+  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L",            team2:"🏳️ 3e (E/H/I/J/K)",    date:"01/07", time:"18:00" }, // N°80
+  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🏳️ 3e (B/E/F/I/J)",    date:"02/07", time:"02:00" }, // N°81
+  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🏳️ 1er G",            team2:"🏳️ 3e (A/E/H/I/J)",    date:"01/07", time:"22:00" }, // N°82
+  { id:1011, round:"32es de finale", roundShort:"S11", team1:"🏳️ 2e K",             team2:"🏳️ 2e L",               date:"03/07", time:"01:00" }, // N°83
+  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🏳️ 1er H",            team2:"🏳️ 2e J",               date:"02/07", time:"21:00" }, // N°84
+  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🏳️ 3e (E/F/G/I/J)",    date:"03/07", time:"05:00" }, // N°85
+  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🏳️ 2e H",               date:"04/07", time:"00:00" }, // N°86
+  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er K",            team2:"🏳️ 3e (D/E/I/J/L)",    date:"04/07", time:"03:30" }, // N°87
+  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🏳️ 2e G",               date:"03/07", time:"20:00" }, // N°88
+  // ── 16es de finale ────────────────────────────────────────────────────────
+  { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1", team2:"🏳️ Vainq. S3", date:"04/07", time:"19:00" }, // N°90
+  { id:1102, round:"16es de finale", roundShort:"H2", team1:"🏳️ Vainq. S2", team2:"🏳️ Vainq. S5", date:"04/07", time:"23:00" }, // N°89
+  { id:1103, round:"16es de finale", roundShort:"H3", team1:"🏳️ Vainq. S4", team2:"🏳️ Vainq. S6", date:"05/07", time:"22:00" }, // N°91
+  { id:1104, round:"16es de finale", roundShort:"H4", team1:"🏳️ Vainq. S7", team2:"🏳️ Vainq. S8", date:"06/07", time:"02:00" }, // N°92
+  { id:1105, round:"16es de finale", roundShort:"H5", team1:"🏳️ Vainq. S11",team2:"🏳️ Vainq. S12",date:"06/07", time:"21:00" }, // N°93
+  { id:1106, round:"16es de finale", roundShort:"H6", team1:"🏳️ Vainq. S9", team2:"🏳️ Vainq. S10",date:"07/07", time:"02:00" }, // N°94
+  { id:1107, round:"16es de finale", roundShort:"H7", team1:"🏳️ Vainq. S14",team2:"🏳️ Vainq. S16",date:"07/07", time:"18:00" }, // N°95
+  { id:1108, round:"16es de finale", roundShort:"H8", team1:"🏳️ Vainq. S13",team2:"🏳️ Vainq. S15",date:"07/07", time:"22:00" }, // N°96
+  // ── Quarts de finale ──────────────────────────────────────────────────────
+  { id:1201, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H2", team2:"🏳️ Vainq. H1", date:"09/07", time:"22:00" }, // N°97
+  { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" }, // N°98
+  { id:1203, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H3", team2:"🏳️ Vainq. H4", date:"11/07", time:"23:00" }, // N°99
+  { id:1204, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7", team2:"🏳️ Vainq. H8", date:"12/07", time:"03:00" }, // N°100
+  // ── Demi-finales ──────────────────────────────────────────────────────────
+  { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"14/07", time:"21:00" }, // N°101
+  { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"15/07", time:"21:00" }, // N°102
+  // ── Petite finale ─────────────────────────────────────────────────────────
+  { id:1401, round:"Petite finale", roundShort:"3P",  team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"18/07", time:"23:00" }, // N°103
+  // ── Finale ────────────────────────────────────────────────────────────────
+  { id:1402, round:"Finale",        roundShort:"🏆",  team1:"🏳️ Vainq. SF1",  team2:"🏳️ Vainq. SF2",  date:"19/07", time:"21:00" }, // N°104
 ];
 
 const ALL_KO_MATCHES = KNOCKOUT_MATCHES;
