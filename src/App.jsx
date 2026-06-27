@@ -279,15 +279,15 @@ const KNOCKOUT_MATCHES = [
   { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",              date:"29/06", time:"19:00" }, // N°76 ✓
   { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🇸🇪 Suède",              date:"30/06", time:"23:00" }, // N°77 ✓ (Suède = 3e F)
   { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",            date:"30/06", time:"19:00" }, // N°78 ✓
-  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🏳️ 3e (C/E/H/I/J)",     date:"01/07", time:"03:00" }, // N°79
-  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L",            team2:"🏳️ 3e (E/H/I/J/K)",     date:"01/07", time:"18:00" }, // N°80
+  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"",     date:"01/07", time:"03:00" }, // N°79
+  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"",                     team2:"",     date:"01/07", time:"18:00" }, // N°80
   { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🇧🇦 Bosnie-Herzégovine", date:"02/07", time:"02:00" }, // N°81 ✓
-  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🇧🇪 Belgique",         team2:"🏳️ 3e (A/E/H/I/J)",     date:"01/07", time:"22:00" }, // N°82 ✓ (Belgique = 1er G)
-  { id:1011, round:"32es de finale", roundShort:"S11", team1:"🏳️ 2e K",             team2:"🏳️ 2e L",               date:"03/07", time:"01:00" }, // N°83
-  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🇪🇸 Espagne",          team2:"🏳️ 2e J",               date:"02/07", time:"21:00" }, // N°84 ✓ (Espagne = 1er H)
-  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🏳️ 3e (E/F/G/I/J)",     date:"03/07", time:"05:00" }, // N°85
+  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🇧🇪 Belgique",         team2:"",     date:"01/07", time:"22:00" }, // N°82 ✓ (Belgique = 1er G)
+  { id:1011, round:"32es de finale", roundShort:"S11", team1:"",                     team2:"",               date:"03/07", time:"01:00" }, // N°83
+  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🇪🇸 Espagne",          team2:"",               date:"02/07", time:"21:00" }, // N°84 ✓ (Espagne = 1er H)
+  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"",     date:"03/07", time:"05:00" }, // N°85
   { id:1014, round:"32es de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🇨🇻 Cap-Vert",            date:"04/07", time:"00:00" }, // N°86 ✓ (Cap-Vert = 2e H)
-  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er K",            team2:"🏳️ 3e (D/E/I/J/L)",     date:"04/07", time:"03:30" }, // N°87
+  { id:1015, round:"32es de finale", roundShort:"S15", team1:"",                     team2:"",     date:"04/07", time:"03:30" }, // N°87
   { id:1016, round:"32es de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🇪🇬 Égypte",             date:"03/07", time:"20:00" }, // N°88 ✓ (Égypte = 2e G)
   // ── 16es de finale ────────────────────────────────────────────────────────
   { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1", team2:"🏳️ Vainq. S3", date:"04/07", time:"19:00" }, // N°90
@@ -460,7 +460,7 @@ const getFlagEmoji = (name) => FLAG_DATA[name]?.emoji || "🏳️";
 
 // Extrait { name, imgUrl, emoji } depuis "🇫🇷 France"
 const splitTeam = (t) => {
-  if (!t) return { name:"", imgUrl:null, emoji:"🏳️" };
+  if (!t || !t.trim()) return { name:"", imgUrl:null, emoji:"❓" };
   const parts  = t.split(" ");
   const name   = parts.slice(1).join(" ") || t;
   return { name, imgUrl: getFlagUrl(name), emoji: getFlagEmoji(name) };
@@ -1526,15 +1526,14 @@ export default function CocoProno() {
             const isKo = m.id >= 1001;
             // Résolution des équipes KO :
             // 1. Override manuel admin (koTeams)
-            // 2. Nom hardcodé dans KNOCKOUT_MATCHES si ce n'est pas un placeholder "🏳️"
-            // 3. Auto-résolution depuis computeQualified (si placeholder)
-            const isPlaceholder = (s) => !s || s.startsWith("🏳️");
+            // 2. Nom hardcodé dans KNOCKOUT_MATCHES si non vide
+            // 3. NE PAS utiliser l'auto-résolution (peut retourner des mauvaises équipes)
             const resolveTeam = (side) => {
               const manual = koTeams[m.id]?.[side];
               if (manual && manual.trim()) return manual;
               const hardcoded = side === "team1" ? m.team1 : m.team2;
-              if (!isPlaceholder(hardcoded)) return hardcoded;
-              return resolveKoTeam(m.id, side) || hardcoded;
+              if (hardcoded && hardcoded.trim()) return hardcoded;
+              return ""; // Vide = à déterminer
             };
             const t1str = isKo ? resolveTeam("team1") : m.team1;
             const t2str = isKo ? resolveTeam("team2") : m.team2;
@@ -1757,8 +1756,7 @@ export default function CocoProno() {
             const resTeam = (side) => {
               const man = koTeams[m.id]?.[side]; if (man?.trim()) return man;
               const hc = side==="team1"?m.team1:m.team2;
-              if (!isPhld(hc)) return hc;
-              return resolveKoTeam(id, side) || hc;
+              return hc || ""; // Pas d'auto-résolution
             };
             const t1s = resTeam("team1"); const t2s = resTeam("team2");
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
