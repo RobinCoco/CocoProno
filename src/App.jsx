@@ -547,6 +547,7 @@ export default function CocoProno() {
 
   const [filterG, setFilterG] = useState("all");
   const [filterMD, setFilterMD] = useState("all");
+  const [scorePhase, setScorePhase] = useState("groupes"); // "groupes" | "finale"
   const [filterPhase, setFilterPhase] = useState("groupes"); // "groupes" | "finale"
   const [bracketView, setBracketView] = useState(false);
   const [koTeams, setKoTeams] = useState({}); // { matchId: { team1, team2 } } — noms édités par admin
@@ -2216,37 +2217,125 @@ export default function CocoProno() {
 
             {/* ── TAB SCORES ── */}
             {adminTab === "scores" && <>
-              <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
-                <div style={{ display:"flex", gap:6, flex:1 }}>
-                  {["all","1","2","3"].map(md=>(
-                    <button key={md} style={{ ...navBtnS(filterMD===md), flexShrink:0, fontSize:12, background: filterMD===md?"#15803d":"rgba(255,255,255,0.75)", color: filterMD===md?"#fff":TEXT }}
-                      onClick={()=>setFilterMD(md)}>{md==="all"?"Tous":"J"+md}</button>
-                  ))}
-                </div>
-                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(255,193,7,0.4)", color:"#fbbf24", padding:"6px 12px", flexShrink:0 }}
-                  onClick={simulateScores}>🧪 Simuler</button>
-                <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(220,38,38,0.4)", color:"#f87171", padding:"6px 12px", flexShrink:0 }}
-                  onClick={resetGroupScores}>🗑 Reset</button>
+              {/* Toggle Groupes / Phase finale */}
+              <div style={{ display:"flex", gap:8, marginBottom:14 }}>
+                {[["groupes","⚽ Groupes"],["finale","🏆 Phase finale"]].map(([p,l])=>(
+                  <button key={p} onClick={()=>setScorePhase(p)} style={{
+                    flex:1, padding:"8px", borderRadius:10, border:"none", cursor:"pointer", fontWeight:800, fontSize:13,
+                    background: scorePhase===p ? "#15803d" : "rgba(255,255,255,0.75)",
+                    color: scorePhase===p ? "#fff" : TEXT,
+                  }}>{l}</button>
+                ))}
               </div>
-              {ALL_MATCHES.filter(m=>filterMD==="all"||m.md===+filterMD).map(m=>{
-                const real = realScores[m.id];
-                return (
-                  <div key={m.id} style={{ ...card, display:"flex", alignItems:"center", gap:12, padding:"12px 16px", marginBottom:8 }}>
-                    <div style={{ flex:1 }}>
-                      <div style={{ fontSize:11, color: MUTED, marginBottom:2 }}>{m.group} · J{m.md} · {m.date}</div>
-                      <div style={{ fontSize:13, fontWeight:700, color: TEXT }}>{m.team1} <span style={{ color: MUTED }}>vs</span> {m.team2}</div>
-                    </div>
-                    {real ? (
-                      <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                        <span style={{ fontSize:16, fontWeight:900, color: G }}>{real.s1}-{real.s2}</span>
-                        <button style={{ ...btnS("ghost"), padding:"4px 10px", fontSize:12, border:"1px solid rgba(0,0,0,0.15)" }} onClick={()=>openReal(m)}>Modifier</button>
-                      </div>
-                    ) : (
-                      <button style={{ ...btnS("primary"), padding:"6px 14px", fontSize:12 }} onClick={()=>openReal(m)}>Entrer</button>
-                    )}
+
+              {scorePhase === "groupes" && <>
+                <div style={{ display:"flex", gap:6, marginBottom:12, flexWrap:"wrap", alignItems:"center" }}>
+                  <div style={{ display:"flex", gap:6, flex:1 }}>
+                    {["all","1","2","3"].map(md=>(
+                      <button key={md} style={{ ...navBtnS(filterMD===md), flexShrink:0, fontSize:12, background: filterMD===md?"#15803d":"rgba(255,255,255,0.75)", color: filterMD===md?"#fff":TEXT }}
+                        onClick={()=>setFilterMD(md)}>{md==="all"?"Tous":"J"+md}</button>
+                    ))}
                   </div>
-                );
-              })}
+                  <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(255,193,7,0.4)", color:"#fbbf24", padding:"6px 12px", flexShrink:0 }}
+                    onClick={simulateScores}>🧪 Simuler</button>
+                  <button style={{ ...btnS("ghost"), fontSize:11, border:"1px solid rgba(220,38,38,0.4)", color:"#f87171", padding:"6px 12px", flexShrink:0 }}
+                    onClick={resetGroupScores}>🗑 Reset</button>
+                </div>
+                {ALL_MATCHES.filter(m=>filterMD==="all"||m.md===+filterMD).map(m=>{
+                  const real = realScores[m.id];
+                  return (
+                    <div key={m.id} style={{ ...card, display:"flex", alignItems:"center", gap:12, padding:"12px 16px", marginBottom:8 }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontSize:11, color: MUTED, marginBottom:2 }}>{m.group} · J{m.md} · {m.date}</div>
+                        <div style={{ fontSize:13, fontWeight:700, color: TEXT }}>{m.team1} <span style={{ color: MUTED }}>vs</span> {m.team2}</div>
+                      </div>
+                      {real ? (
+                        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+                          <span style={{ fontSize:16, fontWeight:900, color: G }}>{real.s1}-{real.s2}</span>
+                          <button style={{ ...btnS("ghost"), padding:"4px 10px", fontSize:12, border:"1px solid rgba(0,0,0,0.15)" }} onClick={()=>openReal(m)}>Modifier</button>
+                        </div>
+                      ) : (
+                        <button style={{ ...btnS("primary"), padding:"6px 14px", fontSize:12 }} onClick={()=>openReal(m)}>Entrer</button>
+                      )}
+                    </div>
+                  );
+                })}
+              </>}
+
+              {scorePhase === "finale" && <>
+                {[...new Set(ALL_KO_MATCHES.map(m=>m.round))].map(round => {
+                  const roundMatches = ALL_KO_MATCHES.filter(m=>m.round===round);
+                  const roundColors = {
+                    "32es de finale":"#7dd3fc","16es de finale":"#38bdf8",
+                    "Quarts":"#818cf8","Demi-finales":"#c084fc",
+                    "Petite finale":"#4ade80","Finale":"#fbbf24",
+                  };
+                  const color = roundColors[round] || "#94a3b8";
+                  return (
+                    <div key={round} style={{ marginBottom:20 }}>
+                      <div style={{ fontSize:11, fontWeight:800, color, textTransform:"uppercase", letterSpacing:1.5, marginBottom:8 }}>
+                        {round}
+                      </div>
+                      {roundMatches.map(m => {
+                        const t1name = (m.team1 && m.team1.trim()) ? m.team1 : (koTeams[m.id]?.team1 || "");
+                        const t2name = (m.team2 && m.team2.trim()) ? m.team2 : (koTeams[m.id]?.team2 || "");
+                        const t1 = splitTeam(t1name);
+                        const t2 = splitTeam(t2name);
+                        const real = realScores[m.id];
+                        const realW = realScores[m.id + KO_WINNER_OFFSET];
+                        const realWinner = realW ? (realW.s1 > realW.s2 ? "team1" : "team2") : null;
+                        const hasTeams = t1name && t2name;
+                        const locked = isMatchLocked(m);
+                        return (
+                          <div key={m.id} style={{
+                            ...card, display:"flex", alignItems:"center", gap:10,
+                            padding:"12px 14px", marginBottom:8, opacity: hasTeams ? 1 : 0.5,
+                            borderLeft: real ? `4px solid ${G}` : locked ? "4px solid rgba(150,150,150,0.4)" : "4px solid rgba(21,128,61,0.2)",
+                          }}>
+                            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:2, minWidth:28 }}>
+                              <span style={{ fontSize:8, fontWeight:800, color, background:"rgba(255,255,255,0.12)", borderRadius:4, padding:"1px 4px" }}>{m.roundShort}</span>
+                              <span style={{ fontSize:9, color:MUTED }}>{m.date}</span>
+                              <span style={{ fontSize:9, color:MUTED }}>{m.time}</span>
+                            </div>
+                            <div style={{ flex:1, minWidth:0 }}>
+                              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", gap:6 }}>
+                                <div style={{ fontSize:12, fontWeight:700, color: realWinner==="team1"?G:TEXT, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                                  {t1.emoji} {t1.name || "À déterm."}
+                                  {realWinner==="team1" && <span style={{color:G, marginLeft:4}}>✓</span>}
+                                </div>
+                                <div style={{ fontSize:13, fontWeight:900, color: real?G:MUTED, flexShrink:0 }}>
+                                  {real ? `${real.s1}–${real.s2}` : "–"}
+                                </div>
+                                <div style={{ fontSize:12, fontWeight:700, color: realWinner==="team2"?G:TEXT, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap", textAlign:"right" }}>
+                                  {realWinner==="team2" && <span style={{color:G, marginRight:4}}>✓</span>}
+                                  {t2.name || "À déterm."} {t2.emoji}
+                                </div>
+                              </div>
+                              {real && realWinner && (
+                                <div style={{ fontSize:10, color:G, marginTop:3, textAlign:"center" }}>
+                                  🏆 Qualifié : {realWinner==="team1"?t1.name:t2.name}
+                                  {realW && realWinner && real.s1===real.s2 ? " (TAB)" : real.s1===real.s2 ? " (Prolong.)" : ""}
+                                </div>
+                              )}
+                            </div>
+                            <div style={{ flexShrink:0 }}>
+                              {real ? (
+                                <button style={{ ...btnS("ghost"), padding:"4px 10px", fontSize:11, border:"1px solid rgba(0,0,0,0.15)" }}
+                                  onClick={()=>openReal(m)}>Modifier</button>
+                              ) : (
+                                <button
+                                  style={{ ...btnS("primary"), padding:"6px 12px", fontSize:11, opacity: hasTeams ? 1 : 0.4 }}
+                                  disabled={!hasTeams}
+                                  onClick={()=>hasTeams && openReal(m)}>Entrer</button>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </>}
             </>}
 
             {/* ── TAB KO TEAMS ── */}
