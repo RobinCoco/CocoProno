@@ -341,8 +341,8 @@ function calcPts(pred, real) {
 }
 
 // Barème phase finale (Option A) :
-// Score 90min : 3pts exact / 2pts bon écart / 1pt bon résultat
-// Bonus qualifié : +2pts si bonne équipe sélectionnée
+// Score final (90min + prolongations incluses, hors TAB) : 3pts exact / 2pts bon écart / 1pt bon résultat
+// Bonus qualifié : +2pts si bonne équipe sélectionnée (inclut résultat TAB)
 // Total max = 5pts
 // L'offset 10000 encode le "vainqueur" dans une entrée predictions séparée :
 //   preds[`${playerId}_${matchId + KO_WINNER_OFFSET}`] = { s1:1, s2:0 } → team1
@@ -354,7 +354,7 @@ function calcPtsKO(predScore, realScore, predWinner, realWinner) {
   const { s1: ps1, s2: ps2 } = predScore;
   const { s1: rs1, s2: rs2 } = realScore;
   let pts = 0;
-  // Score à 90min (max 3pts)
+  // Score final (90min + prolongations si besoin, pas les TAB) → max 3pts
   if (ps1 === rs1 && ps2 === rs2) {
     pts += 3;
   } else {
@@ -1659,6 +1659,9 @@ export default function CocoProno() {
                 {/* Sélecteur "Qui se qualifie ?" — uniquement pour les matchs KO */}
                 {isKo && (
                   <div style={{ marginTop:10, paddingTop:10, borderTop:"1px dashed rgba(21,128,61,0.2)" }}>
+                    <div style={{ fontSize:9, color:MUTED, textAlign:"center", marginBottom:6, fontStyle:"italic" }}>
+                      ⏱ Score final incl. prolongations · Hors tirs au but
+                    </div>
                     <div style={{ fontSize:10, fontWeight:800, color:MUTED, textAlign:"center", marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>
                       🏆 Qui se qualifie ? <span style={{ fontSize:9, color:"rgba(21,128,61,0.6)" }}>(+2pts bonus)</span>
                     </div>
@@ -2314,7 +2317,7 @@ export default function CocoProno() {
                               {real && realWinner && (
                                 <div style={{ fontSize:10, color:G, marginTop:3, textAlign:"center" }}>
                                   🏆 Qualifié : {realWinner==="team1"?t1.name:t2.name}
-                                  {realW && realWinner && real.s1===real.s2 ? " (TAB)" : real.s1===real.s2 ? " (Prolong.)" : ""}
+                                  {realWinner && real.s1===real.s2 ? " (TAB)" : ""}
                                 </div>
                               )}
                             </div>
@@ -2672,7 +2675,14 @@ export default function CocoProno() {
           onClick={e=>{ if(e.target===e.currentTarget) setEditReal(null); }}>
           <div style={{ ...card, width:"100%", maxWidth:340, padding:24 }}>
             <div style={{ textAlign:"center", marginBottom:20 }}>
-              <div style={{ fontSize:12, fontWeight:700, color: MUTED, marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>Score réel</div>
+              <div style={{ fontSize:12, fontWeight:700, color: MUTED, marginBottom:4, textTransform:"uppercase", letterSpacing:1 }}>
+                {editReal.id >= 1001 ? "Score final (incl. prolongations)" : "Score réel"}
+              </div>
+              {editReal.id >= 1001 && (
+                <div style={{ fontSize:10, color:MUTED, marginBottom:6, fontStyle:"italic" }}>
+                  ⏱ Prolongations incluses · Ne pas compter les TAB
+                </div>
+              )}
               <div style={{ fontSize:15, fontWeight:800, color: TEXT }}>{editReal.team1} vs {editReal.team2}</div>
             </div>
             <div style={{ display:"grid", gridTemplateColumns:"1fr auto 1fr", alignItems:"center", gap:10, marginBottom:20 }}>
@@ -2704,7 +2714,7 @@ export default function CocoProno() {
               <div style={{ marginBottom:16, padding:"12px", background:"rgba(180,83,9,0.07)", borderRadius:12, border:"1px solid rgba(180,83,9,0.2)" }}>
                 <div style={{ fontSize:10, fontWeight:800, color:"#b45309", textAlign:"center", marginBottom:8, textTransform:"uppercase", letterSpacing:1 }}>
                   🏆 Qui se qualifie ?
-                  <span style={{ fontSize:9, color:MUTED, display:"block", fontWeight:600, marginTop:2, textTransform:"none" }}>Score = 90min · Qualifié = vainqueur final (incl. TAB)</span>
+                  <span style={{ fontSize:9, color:MUTED, display:"block", fontWeight:600, marginTop:2, textTransform:"none" }}>Score final (90min + prol.) · Qualifié = vainqueur (incl. TAB)</span>
                 </div>
                 <div style={{ display:"flex", gap:8 }}>
                   {[["team1", editReal.team1], ["team2", editReal.team2]].map(([side, name]) => (
