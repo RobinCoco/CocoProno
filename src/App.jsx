@@ -273,22 +273,22 @@ const KO_SLOT_MAP = {
 // N° FIFA : 73-88 (32es), 89-96 (16es), 97-100 (QF), 101-102 (SF), 103 (3P), 104 (F)
 const KNOCKOUT_MATCHES = [
   // ── 32es de finale ────────────────────────────────────────────────────────
-  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🇿🇦 Afrique du Sud",  team2:"🇨🇦 Canada",             date:"28/06", time:"21:00" }, // N°73
-  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🇩🇪 Allemagne",        team2:"🏳️ 3e (A/B/C/D/F)",    date:"29/06", time:"22:30" }, // N°74
-  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🇳🇱 Pays-Bas",         team2:"🇲🇦 Maroc",             date:"30/06", time:"03:00" }, // N°75
-  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",             date:"29/06", time:"19:00" }, // N°76
-  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🏳️ 3e (C/D/F/G/H)",    date:"30/06", time:"23:00" }, // N°77
-  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",           date:"30/06", time:"19:00" }, // N°78
-  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🏳️ 3e (C/E/F/H/I)",    date:"01/07", time:"03:00" }, // N°79
-  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L",            team2:"🏳️ 3e (E/H/I/J/K)",    date:"01/07", time:"18:00" }, // N°80
-  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🇧🇦 Bosnie-Herzégovine",date:"02/07", time:"02:00" }, // N°81
-  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🏳️ 1er G",            team2:"🏳️ 3e (A/E/H/I/J)",    date:"01/07", time:"22:00" }, // N°82
+  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🇿🇦 Afrique du Sud",  team2:"🇨🇦 Canada",             date:"28/06", time:"21:00" }, // N°73 ✓
+  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🇩🇪 Allemagne",        team2:"🇵🇾 Paraguay",            date:"29/06", time:"22:30" }, // N°74 ✓ (Paraguay = 3e D)
+  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🇳🇱 Pays-Bas",         team2:"🇲🇦 Maroc",              date:"30/06", time:"03:00" }, // N°75 ✓
+  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",              date:"29/06", time:"19:00" }, // N°76 ✓
+  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🇸🇪 Suède",              date:"30/06", time:"23:00" }, // N°77 ✓ (Suède = 3e F)
+  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",            date:"30/06", time:"19:00" }, // N°78 ✓
+  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🏳️ 3e (C/E/H/I/J)",     date:"01/07", time:"03:00" }, // N°79
+  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏳️ 1er L",            team2:"🏳️ 3e (E/H/I/J/K)",     date:"01/07", time:"18:00" }, // N°80
+  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🇧🇦 Bosnie-Herzégovine", date:"02/07", time:"02:00" }, // N°81 ✓
+  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🇧🇪 Belgique",         team2:"🏳️ 3e (A/E/H/I/J)",     date:"01/07", time:"22:00" }, // N°82 ✓ (Belgique = 1er G)
   { id:1011, round:"32es de finale", roundShort:"S11", team1:"🏳️ 2e K",             team2:"🏳️ 2e L",               date:"03/07", time:"01:00" }, // N°83
-  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🏳️ 1er H",            team2:"🇦🇹 Autriche",          date:"02/07", time:"21:00" }, // N°84
-  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🏳️ 3e (E/F/G/I/J)",    date:"03/07", time:"05:00" }, // N°85
-  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🏳️ 2e H",               date:"04/07", time:"00:00" }, // N°86
-  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er K",            team2:"🏳️ 3e (D/E/I/J/L)",    date:"04/07", time:"03:30" }, // N°87
-  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🏳️ 2e G",               date:"03/07", time:"20:00" }, // N°88
+  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🇪🇸 Espagne",          team2:"🏳️ 2e J",               date:"02/07", time:"21:00" }, // N°84 ✓ (Espagne = 1er H)
+  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🏳️ 3e (E/F/G/I/J)",     date:"03/07", time:"05:00" }, // N°85
+  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🇨🇻 Cap-Vert",            date:"04/07", time:"00:00" }, // N°86 ✓ (Cap-Vert = 2e H)
+  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🏳️ 1er K",            team2:"🏳️ 3e (D/E/I/J/L)",     date:"04/07", time:"03:30" }, // N°87
+  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🇪🇬 Égypte",             date:"03/07", time:"20:00" }, // N°88 ✓ (Égypte = 2e G)
   // ── 16es de finale ────────────────────────────────────────────────────────
   { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1", team2:"🏳️ Vainq. S3", date:"04/07", time:"19:00" }, // N°90
   { id:1102, round:"16es de finale", roundShort:"H2", team1:"🏳️ Vainq. S2", team2:"🏳️ Vainq. S5", date:"04/07", time:"23:00" }, // N°89
