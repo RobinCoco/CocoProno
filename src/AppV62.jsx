@@ -41,6 +41,10 @@ const sbUpsert = async (table, data) => {
     headers: { ...sbH(), "Prefer": "resolution=merge-duplicates,return=minimal" },
     body: JSON.stringify(data),
   });
+  if (!r.ok) {
+    const text = await r.text().catch(() => "");
+    throw new Error(`sbUpsert ${table} ${r.status}: ${text.slice(0,120)}`);
+  }
   return r;
 };
 
@@ -822,9 +826,15 @@ export default function CocoProno() {
       }
       clearStatus("saved");
     } catch(e) {
-      console.warn("saveInlinePred échoué:", e);
+      console.warn("saveInlinePred échoué:", e?.message || e);
+      // Fallback local en cas d'erreur Supabase
       storageSave("cp_preds", { ...predsRef.current, [k]: val }).catch(() => {});
       clearStatus("error");
+      // Affiche une alerte si c'est une erreur Supabase récurrente
+      if (storageMode.current === "supabase" && (e?.message || "").includes("429")) {
+        setSbMode("error");
+        console.error("⚠️ Supabase quota dépassé — les sauvegardes échouent.");
+      }
     }
   };
 
@@ -1372,22 +1382,30 @@ export default function CocoProno() {
         {/* Indicateur connexion + bouton reload */}
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:10 }}>
           <span style={{ fontSize:11, fontWeight:600, padding:"3px 10px", borderRadius:20,
-            background: sbMode==="supabase" ? "rgba(21,128,61,0.85)" : "rgba(180,83,9,0.85)",
+            background: sbMode==="supabase" ? "rgba(21,128,61,0.85)" : sbMode==="error" ? "rgba(220,38,38,0.85)" : "rgba(180,83,9,0.85)",
             color:"#fff" }}>
-            {sbMode === "supabase" ? "🟢 Connecté" : "🟡 Mode local"}
+            {sbMode === "supabase" ? "🟢 Supabase OK" : sbMode === "error" ? "🔴 Supabase KO" : "🟡 Mode local"}
           </span>
           <button style={{ fontSize:11, color:"rgba(255,255,255,0.8)", background:"rgba(255,255,255,0.12)", border:"1px solid rgba(255,255,255,0.2)", borderRadius:20, padding:"4px 12px", cursor:"pointer" }}
             onClick={async () => {
-              // Force reconnexion Supabase même si on était en mode local
               try {
                 const [pl, pr, sc] = await Promise.all([
                   sbSelect("players"),
                   sbSelect("predictions"),
                   sbSelect("real_scores"),
                 ]);
-                if (Array.isArray(pl)) {
+                if (Array.isArray(pl) && pl.length > 0) {
                   storageMode.current = "supabase";
-                  setSbMode("supabase");
+                  // Test write pour vérifier que les écritures fonctionnent
+                  try {
+                    await sbUpsert("predictions", { player_id: pl[0].id, match_id: 99999, score1: 0, score2: 0 });
+                    await fetch(`${SB_URL}/predictions?player_id=eq.${pl[0].id}&match_id=eq.99999`, { method:"DELETE", headers: sbH() });
+                    setSbMode("supabase");
+                  } catch(writeErr) {
+                    setSbMode("error");
+                    alert(`⚠️ Lecture OK mais écriture échoue :\n${writeErr.message}\n\nVérifie Supabase → Settings → Usage`);
+                    return;
+                  }
                   setPlayers(pl);
                   const predsFromDb = {};
                   (pr||[]).forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
@@ -1396,7 +1414,7 @@ export default function CocoProno() {
                   (sc||[]).forEach(r => { scoresMap[r.match_id] = { s1: r.score1, s2: r.score2 }; });
                   setRealScores(scoresMap);
                 }
-              } catch(e) { console.warn("Reload failed:", e); }
+              } catch(e) { setSbMode("storage"); console.warn("Reload failed:", e); }
             }}>
             🔄 Recharger
           </button>
