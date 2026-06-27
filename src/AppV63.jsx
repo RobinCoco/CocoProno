@@ -700,6 +700,7 @@ export default function CocoProno() {
   useEffect(() => {
     const interval = setInterval(async () => {
       if (storageMode.current !== "supabase") return;
+      // Polling toutes les 60s (au lieu de 15s) pour éviter les re-renders qui interrompent la saisie
       const [sc, pr] = await Promise.all([
         sbSelect("real_scores"),
         sbSelect("predictions"),
@@ -714,7 +715,7 @@ export default function CocoProno() {
         pr.forEach(r => { predsFromDb[`${r.player_id}_${r.match_id}`] = { s1: r.score1, s2: r.score2 }; });
         setPreds(prev => ({ ...prev, ...predsFromDb }));
       }
-    }, 15000);
+    }, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -1597,7 +1598,7 @@ export default function CocoProno() {
                   <span style={{ fontSize:22, fontWeight:900, color:"#999" }}>{v !== "" ? v : "–"}</span>
                 </div>
               : <input type="number" min="0" max="99" value={v} placeholder="–" style={iStyle} className={iClass}
-                  onClick={e=>e.stopPropagation()} onChange={onCh} onBlur={onBl} onFocus={e=>e.target.select()} />;
+                  onClick={e=>e.stopPropagation()} onChange={onCh} onBlur={onBl} onInput={onBl} onFocus={e=>e.target.select()} />;
 
             return (
               <div key={m.id} id={`match-card-${m.id}`} style={{
@@ -1634,7 +1635,13 @@ export default function CocoProno() {
                     <FlagBox t={t1} />
                     <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t1.name}</div>
                     <ScoreBox v={v1}
-                      onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s1:e.target.value}}))}
+                      onCh={e=>{
+                        const val = e.target.value;
+                        setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s1:val}}));
+                        // Sauvegarde immédiate si l'autre score est déjà présent
+                        const s2cur = inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):undefined);
+                        if (val!=="" && s2cur!==undefined && s2cur!=="") saveInlinePred(m.id, val, s2cur);
+                      }}
                       onBl={e=>{saveInlinePred(m.id, e.target.value, inlineInputs[m.id]?.s2??(pred!==undefined?String(pred.s2):undefined));}}
                       otherV={v2} />
                   </div>
@@ -1652,7 +1659,12 @@ export default function CocoProno() {
                     <FlagBox t={t2} />
                     <div style={{ fontWeight:800, fontSize:12, color:locked?"#777":TEXT, textAlign:"center", lineHeight:1.2, maxWidth:100 }}>{t2.name}</div>
                     <ScoreBox v={v2}
-                      onCh={e=>setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s2:e.target.value}}))}
+                      onCh={e=>{
+                        const val = e.target.value;
+                        setInlineInputs(prev=>({...prev,[m.id]:{...prev[m.id],s2:val}}));
+                        const s1cur = inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):undefined);
+                        if (val!=="" && s1cur!==undefined && s1cur!=="") saveInlinePred(m.id, s1cur, val);
+                      }}
                       onBl={e=>{saveInlinePred(m.id, inlineInputs[m.id]?.s1??(pred!==undefined?String(pred.s1):undefined), e.target.value);}}
                       otherV={v1} />
                   </div>
