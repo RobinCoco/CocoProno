@@ -358,7 +358,8 @@ function calcPtsKO(predScore, realScore, predWinner, realWinner) {
   const { s1: ps1, s2: ps2 } = predScore;
   const { s1: rs1, s2: rs2 } = realScore;
   let pts = 0;
-  // Score final (90min + prolongations si besoin, pas les TAB) → max 3pts
+
+  // Score final (90min + prolongations) → max 3pts
   if (ps1 === rs1 && ps2 === rs2) {
     pts += 3;
   } else {
@@ -369,8 +370,21 @@ function calcPtsKO(predScore, realScore, predWinner, realWinner) {
       else pts += 1;
     }
   }
-  // Bonus vainqueur/qualifié (max 2pts)
-  if (predWinner && realWinner && predWinner === realWinner) pts += 2;
+
+  // Bonus qualifié → max 2pts
+  // Règle : si résultat tranché (pas de nul), le qualifié est déduit automatiquement
+  // du score prédit — la sélection manuelle n'est nécessaire qu'en cas de nul (→ TAB)
+  const realIsDraw = rs1 === rs2;
+  if (realIsDraw) {
+    // Nul après prolongations → TAB : seule la sélection explicite compte
+    if (predWinner && realWinner && predWinner === realWinner) pts += 2;
+  } else {
+    // Résultat tranché : on déduit le qualifié du score prédit
+    const realWinnerAuto = rs1 > rs2 ? "team1" : "team2";
+    const predWinnerAuto = ps1 > ps2 ? "team1" : ps2 > ps1 ? "team2" : null;
+    if (predWinnerAuto && predWinnerAuto === realWinnerAuto) pts += 2;
+  }
+
   return pts;
 }
 
@@ -1693,7 +1707,7 @@ export default function CocoProno() {
                       ⏱ Score final incl. prolongations · Hors tirs au but
                     </div>
                     <div style={{ fontSize:10, fontWeight:800, color:MUTED, textAlign:"center", marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>
-                      🏆 Qui se qualifie ? <span style={{ fontSize:9, color:"rgba(21,128,61,0.6)" }}>(+2pts bonus)</span>
+                      🏆 Qui se qualifie ? <span style={{ fontSize:9, color:"rgba(21,128,61,0.6)" }}>(+2pts · utile seulement si nul → TAB)</span>
                     </div>
                     {(() => {
                       const selW = myWinner(m);
@@ -2631,7 +2645,7 @@ export default function CocoProno() {
                         {isKo && (
                           <div style={{ marginTop:10, paddingTop:8, borderTop:"1px dashed rgba(251,191,36,0.25)" }}>
                             <div style={{ fontSize:9, fontWeight:800, color:"#b45309", textAlign:"center", marginBottom:6, textTransform:"uppercase", letterSpacing:1 }}>
-                              🏆 Qualifié ? <span style={{ color:MUTED, fontWeight:600 }}>(+2pts)</span>
+                              🏆 Qualifié ? <span style={{ color:MUTED, fontWeight:600 }}>(nul → TAB uniquement)</span>
                             </div>
                             <div style={{ display:"flex", gap:6 }}>
                               {[["team1",t1],["team2",t2]].map(([side,t]) => (
