@@ -298,7 +298,7 @@ const KNOCKOUT_MATCHES = [
   { id:1102, round:"Huitièmes de finale", roundShort:"H2", team1:"🇵🇾 Paraguay",      team2:"🇫🇷 France", date:"04/07", time:"23:00" }, // N°89
   { id:1103, round:"Huitièmes de finale", roundShort:"H3", team1:"🇧🇷 Brésil",         team2:"🇳🇴 Norvège", date:"05/07", time:"22:00" }, // N°91
   { id:1104, round:"Huitièmes de finale", roundShort:"H4", team1:"🇲🇽 Mexique",        team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"06/07", time:"02:00" }, // N°92
-  { id:1105, round:"Huitièmes de finale", roundShort:"H5", team1:"",               team2:"🇪🇸 Espagne",date:"06/07", time:"21:00" }, // N°93
+  { id:1105, round:"Huitièmes de finale", roundShort:"H5", team1:"🇵🇹 Portugal",         team2:"🇪🇸 Espagne",date:"06/07", time:"21:00" }, // N°93
   { id:1106, round:"Huitièmes de finale", roundShort:"H6", team1:"🇺🇸 États-Unis",    team2:"🇧🇪 Belgique",date:"07/07", time:"02:00" }, // N°94
   { id:1107, round:"Huitièmes de finale", roundShort:"H7", team1:"🇦🇷 Argentine",     team2:"",date:"07/07", time:"18:00" }, // N°95
   { id:1108, round:"Huitièmes de finale", roundShort:"H8", team1:"🇨🇭 Suisse",         team2:"",date:"07/07", time:"22:00" }, // N°96
