@@ -277,31 +277,31 @@ const KO_SLOT_MAP = {
 // N° FIFA : 73-88 (32es), 89-96 (16es), 97-100 (QF), 101-102 (SF), 103 (3P), 104 (F)
 const KNOCKOUT_MATCHES = [
   // ── 32es de finale ────────────────────────────────────────────────────────
-  { id:1001, round:"32es de finale", roundShort:"S1",  team1:"🇿🇦 Afrique du Sud",  team2:"🇨🇦 Canada",             date:"28/06", time:"21:00" }, // N°73 ✓
-  { id:1002, round:"32es de finale", roundShort:"S2",  team1:"🇩🇪 Allemagne",        team2:"🇵🇾 Paraguay",            date:"29/06", time:"22:30" }, // N°74 ✓ (Paraguay = 3e D)
-  { id:1003, round:"32es de finale", roundShort:"S3",  team1:"🇳🇱 Pays-Bas",         team2:"🇲🇦 Maroc",              date:"30/06", time:"03:00" }, // N°75 ✓
-  { id:1004, round:"32es de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",              date:"29/06", time:"19:00" }, // N°76 ✓
-  { id:1005, round:"32es de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🇸🇪 Suède",              date:"30/06", time:"23:00" }, // N°77 ✓ (Suède = 3e F)
-  { id:1006, round:"32es de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",            date:"30/06", time:"19:00" }, // N°78 ✓
-  { id:1007, round:"32es de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🇪🇨 Équateur",           date:"01/07", time:"03:00" }, // N°79 ✓ (3e E)
-  { id:1008, round:"32es de finale", roundShort:"S8",  team1:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",       team2:"🇨🇩 RD Congo",           date:"01/07", time:"18:00" }, // N°80 ✓ (1L vs 3e K)
-  { id:1009, round:"32es de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🇧🇦 Bosnie-Herzégovine", date:"02/07", time:"02:00" }, // N°81 ✓
-  { id:1010, round:"32es de finale", roundShort:"S10", team1:"🇧🇪 Belgique",         team2:"🇸🇳 Sénégal",            date:"01/07", time:"22:00" }, // N°82 ✓ (1G vs 3e I)
-  { id:1011, round:"32es de finale", roundShort:"S11", team1:"🇵🇹 Portugal",         team2:"🇭🇷 Croatie",            date:"03/07", time:"01:00" }, // N°83 ✓ (2K vs 2L)
-  { id:1012, round:"32es de finale", roundShort:"S12", team1:"🇪🇸 Espagne",          team2:"🇦🇹 Autriche",           date:"02/07", time:"21:00" }, // N°84 ✓ (2J)
-  { id:1013, round:"32es de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🇩🇿 Algérie",            date:"03/07", time:"05:00" }, // N°85 ✓ (1B vs 3e J)
-  { id:1014, round:"32es de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🇨🇻 Cap-Vert",            date:"04/07", time:"00:00" }, // N°86 ✓ (Cap-Vert = 2e H)
-  { id:1015, round:"32es de finale", roundShort:"S15", team1:"🇨🇴 Colombie",         team2:"🇬🇭 Ghana",              date:"04/07", time:"03:30" }, // N°87 ✓ (1K vs 3e L)
-  { id:1016, round:"32es de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🇪🇬 Égypte",             date:"03/07", time:"20:00" }, // N°88 ✓ (Égypte = 2e G)
+  { id:1001, round:"Seizièmes de finale", roundShort:"S1",  team1:"🇿🇦 Afrique du Sud",  team2:"🇨🇦 Canada",             date:"28/06", time:"21:00" }, // N°73 ✓
+  { id:1002, round:"Seizièmes de finale", roundShort:"S2",  team1:"🇩🇪 Allemagne",        team2:"🇵🇾 Paraguay",            date:"29/06", time:"22:30" }, // N°74 ✓ (Paraguay = 3e D)
+  { id:1003, round:"Seizièmes de finale", roundShort:"S3",  team1:"🇳🇱 Pays-Bas",         team2:"🇲🇦 Maroc",              date:"30/06", time:"03:00" }, // N°75 ✓
+  { id:1004, round:"Seizièmes de finale", roundShort:"S4",  team1:"🇧🇷 Brésil",           team2:"🇯🇵 Japon",              date:"29/06", time:"19:00" }, // N°76 ✓
+  { id:1005, round:"Seizièmes de finale", roundShort:"S5",  team1:"🇫🇷 France",           team2:"🇸🇪 Suède",              date:"30/06", time:"23:00" }, // N°77 ✓ (Suède = 3e F)
+  { id:1006, round:"Seizièmes de finale", roundShort:"S6",  team1:"🇨🇮 Côte d'Ivoire",   team2:"🇳🇴 Norvège",            date:"30/06", time:"19:00" }, // N°78 ✓
+  { id:1007, round:"Seizièmes de finale", roundShort:"S7",  team1:"🇲🇽 Mexique",          team2:"🇪🇨 Équateur",           date:"01/07", time:"03:00" }, // N°79 ✓ (3e E)
+  { id:1008, round:"Seizièmes de finale", roundShort:"S8",  team1:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",       team2:"🇨🇩 RD Congo",           date:"01/07", time:"18:00" }, // N°80 ✓ (1L vs 3e K)
+  { id:1009, round:"Seizièmes de finale", roundShort:"S9",  team1:"🇺🇸 États-Unis",       team2:"🇧🇦 Bosnie-Herzégovine", date:"02/07", time:"02:00" }, // N°81 ✓
+  { id:1010, round:"Seizièmes de finale", roundShort:"S10", team1:"🇧🇪 Belgique",         team2:"🇸🇳 Sénégal",            date:"01/07", time:"22:00" }, // N°82 ✓ (1G vs 3e I)
+  { id:1011, round:"Seizièmes de finale", roundShort:"S11", team1:"🇵🇹 Portugal",         team2:"🇭🇷 Croatie",            date:"03/07", time:"01:00" }, // N°83 ✓ (2K vs 2L)
+  { id:1012, round:"Seizièmes de finale", roundShort:"S12", team1:"🇪🇸 Espagne",          team2:"🇦🇹 Autriche",           date:"02/07", time:"21:00" }, // N°84 ✓ (2J)
+  { id:1013, round:"Seizièmes de finale", roundShort:"S13", team1:"🇨🇭 Suisse",           team2:"🇩🇿 Algérie",            date:"03/07", time:"05:00" }, // N°85 ✓ (1B vs 3e J)
+  { id:1014, round:"Seizièmes de finale", roundShort:"S14", team1:"🇦🇷 Argentine",        team2:"🇨🇻 Cap-Vert",            date:"04/07", time:"00:00" }, // N°86 ✓ (Cap-Vert = 2e H)
+  { id:1015, round:"Seizièmes de finale", roundShort:"S15", team1:"🇨🇴 Colombie",         team2:"🇬🇭 Ghana",              date:"04/07", time:"03:30" }, // N°87 ✓ (1K vs 3e L)
+  { id:1016, round:"Seizièmes de finale", roundShort:"S16", team1:"🇦🇺 Australie",        team2:"🇪🇬 Égypte",             date:"03/07", time:"20:00" }, // N°88 ✓ (Égypte = 2e G)
   // ── 16es de finale ────────────────────────────────────────────────────────
-  { id:1101, round:"16es de finale", roundShort:"H1", team1:"🏳️ Vainq. S1", team2:"🏳️ Vainq. S3", date:"04/07", time:"19:00" }, // N°90
-  { id:1102, round:"16es de finale", roundShort:"H2", team1:"🏳️ Vainq. S2", team2:"🏳️ Vainq. S5", date:"04/07", time:"23:00" }, // N°89
-  { id:1103, round:"16es de finale", roundShort:"H3", team1:"🏳️ Vainq. S4", team2:"🏳️ Vainq. S6", date:"05/07", time:"22:00" }, // N°91
-  { id:1104, round:"16es de finale", roundShort:"H4", team1:"🏳️ Vainq. S7", team2:"🏳️ Vainq. S8", date:"06/07", time:"02:00" }, // N°92
-  { id:1105, round:"16es de finale", roundShort:"H5", team1:"🏳️ Vainq. S11",team2:"🏳️ Vainq. S12",date:"06/07", time:"21:00" }, // N°93
-  { id:1106, round:"16es de finale", roundShort:"H6", team1:"🏳️ Vainq. S9", team2:"🏳️ Vainq. S10",date:"07/07", time:"02:00" }, // N°94
-  { id:1107, round:"16es de finale", roundShort:"H7", team1:"🏳️ Vainq. S14",team2:"🏳️ Vainq. S16",date:"07/07", time:"18:00" }, // N°95
-  { id:1108, round:"16es de finale", roundShort:"H8", team1:"🏳️ Vainq. S13",team2:"🏳️ Vainq. S15",date:"07/07", time:"22:00" }, // N°96
+  { id:1101, round:"Huitièmes de finale", roundShort:"H1", team1:"🇨🇦 Canada",        team2:"🇲🇦 Maroc", date:"04/07", time:"19:00" }, // N°90
+  { id:1102, round:"Huitièmes de finale", roundShort:"H2", team1:"🇵🇾 Paraguay",      team2:"🇫🇷 France", date:"04/07", time:"23:00" }, // N°89
+  { id:1103, round:"Huitièmes de finale", roundShort:"H3", team1:"🇧🇷 Brésil",         team2:"🇳🇴 Norvège", date:"05/07", time:"22:00" }, // N°91
+  { id:1104, round:"Huitièmes de finale", roundShort:"H4", team1:"🇲🇽 Mexique",        team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"06/07", time:"02:00" }, // N°92
+  { id:1105, round:"Huitièmes de finale", roundShort:"H5", team1:"",               team2:"🇪🇸 Espagne",date:"06/07", time:"21:00" }, // N°93
+  { id:1106, round:"Huitièmes de finale", roundShort:"H6", team1:"🇺🇸 États-Unis",    team2:"🇧🇪 Belgique",date:"07/07", time:"02:00" }, // N°94
+  { id:1107, round:"Huitièmes de finale", roundShort:"H7", team1:"🇦🇷 Argentine",     team2:"",date:"07/07", time:"18:00" }, // N°95
+  { id:1108, round:"Huitièmes de finale", roundShort:"H8", team1:"🇨🇭 Suisse",         team2:"",date:"07/07", time:"22:00" }, // N°96
   // ── Quarts de finale ──────────────────────────────────────────────────────
   { id:1201, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H2", team2:"🏳️ Vainq. H1", date:"09/07", time:"22:00" }, // N°97
   { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" }, // N°98
@@ -1548,8 +1548,8 @@ export default function CocoProno() {
           const inputStyle = { width:52, height:52, borderRadius:12, border:`2.5px solid ${G}`, background:"rgba(21,128,61,0.07)", textAlign:"center", fontSize:26, fontWeight:900, color:G, outline:"none", MozAppearance:"textfield" };
 
           const roundColors = {
-            "32es de finale": { bg:"rgba(20,50,70,0.9)",  color:"#7dd3fc" },
-            "16es de finale": { bg:"rgba(30,58,90,0.9)",  color:"#38bdf8" },
+            "Seizièmes de finale": { bg:"rgba(20,50,70,0.9)",  color:"#7dd3fc" },
+            "Huitièmes de finale": { bg:"rgba(30,58,90,0.9)",  color:"#38bdf8" },
             "Quarts":         { bg:"rgba(26,26,74,0.9)",  color:"#818cf8" },
             "Demi-finales":   { bg:"rgba(42,26,74,0.9)",  color:"#c084fc" },
             "Petite finale":  { bg:"rgba(26,42,26,0.9)",  color:"#4ade80" },
@@ -1906,7 +1906,7 @@ export default function CocoProno() {
             paths.push({ d:`M${X3+CW},${y3[1]+CH/2} H${xMidP+8} V${yPetite+CH/2}`, dashed:true });
 
             const roundHeaders = [
-              { x:X0, label:"32es" }, { x:X1, label:"16es" },
+              { x:X0, label:"16es" }, { x:X1, label:"8es" },
               { x:X2, label:"Quarts" }, { x:X3, label:"Demi" }, { x:X4, label:"Finale" },
             ];
 
@@ -1980,7 +1980,7 @@ export default function CocoProno() {
                         <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
                           <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
                           <div style={{padding:"6px 18px",borderRadius:20,background:rc.bg,color:rc.color,fontSize:13,fontWeight:800,border:`1px solid ${rc.color}55`,letterSpacing:0.5}}>
-                            {round==="Finale"?"🏆 ":round==="Demi-finales"?"⚡ ":round==="Quarts"?"🎯 ":round==="16es de finale"?"⚽ ":round==="32es de finale"?"🌍 ":"🥉 "}{round}
+                            {round==="Finale"?"🏆 ":round==="Demi-finales"?"⚡ ":round==="Quarts"?"🎯 ":round==="Huitièmes de finale"?"⚽ ":round==="Seizièmes de finale"?"🌍 ":"🥉 "}{round}
                           </div>
                           <div style={{flex:1,height:1,background:"rgba(255,255,255,0.15)"}}/>
                         </div>
@@ -2313,7 +2313,7 @@ export default function CocoProno() {
                 {[...new Set(ALL_KO_MATCHES.map(m=>m.round))].map(round => {
                   const roundMatches = ALL_KO_MATCHES.filter(m=>m.round===round);
                   const roundColors = {
-                    "32es de finale":"#7dd3fc","16es de finale":"#38bdf8",
+                    "Seizièmes de finale":"#7dd3fc","Huitièmes de finale":"#38bdf8",
                     "Quarts":"#818cf8","Demi-finales":"#c084fc",
                     "Petite finale":"#4ade80","Finale":"#fbbf24",
                   };
@@ -2432,7 +2432,7 @@ export default function CocoProno() {
 
               {/* Corrections manuelles 32es de finale */}
               <div style={{ fontSize:11, fontWeight:700, color:"rgba(255,255,255,0.5)", textTransform:"uppercase", letterSpacing:2, marginBottom:8 }}>Corrections manuelles (32es de finale)</div>
-              {ALL_KO_MATCHES.filter(m => m.round === "32es de finale").map(m => {
+              {ALL_KO_MATCHES.filter(m => m.round === "Seizièmes de finale").map(m => {
                 const autoT1 = m.team1 && m.team1.trim() ? m.team1 : (koTeams[m.id]?.team1 || "");
                 const autoT2 = m.team2 && m.team2.trim() ? m.team2 : (koTeams[m.id]?.team2 || "");
                 return (
