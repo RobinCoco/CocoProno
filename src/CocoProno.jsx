@@ -568,6 +568,7 @@ export default function CocoProno() {
   const [scorePhase, setScorePhase] = useState("groupes"); // "groupes" | "finale"
   const [filterPhase, setFilterPhase] = useState("groupes"); // "groupes" | "finale"
   const [bracketView, setBracketView] = useState(false);
+  const [filterRound, setFilterRound] = useState("all");
   const [koTeams, setKoTeams] = useState({}); // { matchId: { team1, team2 } } — noms édités par admin
   const [inlineInputs, setInlineInputs] = useState({});  // { matchId: { s1, s2 } }
   const [editReal, setEditReal] = useState(null);
@@ -1956,10 +1957,38 @@ export default function CocoProno() {
           return (
             <>
               {/* Toggle liste / bracket */}
-              <div style={{display:"flex",gap:8,marginBottom:16}}>
+              <div style={{display:"flex",gap:8,marginBottom:12}}>
                 <button onClick={()=>setBracketView(false)} style={{...navBtnS(!bracketView),flex:1,fontSize:12,background:!bracketView?"#15803d":"rgba(255,255,255,0.7)",color:!bracketView?"#fff":TEXT}}>📋 Liste</button>
                 <button onClick={()=>setBracketView(true)}  style={{...navBtnS(bracketView), flex:1,fontSize:12,background:bracketView?"#15803d":"rgba(255,255,255,0.7)",color:bracketView?"#fff":TEXT}}>🌳 Arbre</button>
               </div>
+
+              {/* Filtres par tour — uniquement en vue liste */}
+              {!bracketView && (
+                <div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto",paddingBottom:4,WebkitOverflowScrolling:"touch"}}>
+                  {[
+                    ["all",      "Tous"],
+                    ["Seizièmes de finale", "16es"],
+                    ["Huitièmes de finale", "8es"],
+                    ["Quarts",   "Quarts"],
+                    ["Demi-finales","Demies"],
+                    ["Finale",   "Finale"],
+                  ].map(([val, label]) => {
+                    const active = filterRound === val;
+                    const rc = roundColors[val] || { color:"rgba(255,255,255,0.8)" };
+                    return (
+                      <button key={val} onClick={()=>setFilterRound(val)} style={{
+                        flexShrink:0, padding:"6px 14px", borderRadius:20, border:"none",
+                        cursor:"pointer", fontWeight:700, fontSize:12, transition:"all 0.15s",
+                        background: active
+                          ? (val==="all" ? "#15803d" : rc.bg || "rgba(21,128,61,0.85)")
+                          : "rgba(255,255,255,0.18)",
+                        color: active ? (val==="all" ? "#fff" : rc.color) : "rgba(255,255,255,0.75)",
+                        boxShadow: active ? "0 2px 8px rgba(0,0,0,0.3)" : "none",
+                      }}>{label}</button>
+                    );
+                  })}
+                </div>
+              )}
 
               {bracketView ? (
                 /* ── VUE BRACKET — arbre unifié ── */
@@ -1972,7 +2001,9 @@ export default function CocoProno() {
               ) : (
                 /* ── VUE LISTE ── */
                 <div>
-                  {[...new Set(ALL_KO_MATCHES.map(m=>m.round))].map(round => {
+                  {[...new Set(ALL_KO_MATCHES.map(m=>m.round))]
+                    .filter(round => filterRound === "all" || round === filterRound)
+                    .map(round => {
                     const matches=ALL_KO_MATCHES.filter(m=>m.round===round);
                     const rc=roundColors[round]||{bg:"rgba(30,45,66,0.9)",color:"#e2e8f0"};
                     return (
