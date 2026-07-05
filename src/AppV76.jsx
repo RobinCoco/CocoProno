@@ -300,10 +300,10 @@ const KNOCKOUT_MATCHES = [
   { id:1104, round:"Huitièmes de finale", roundShort:"H4", team1:"🇲🇽 Mexique",        team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"06/07", time:"02:00" }, // N°92
   { id:1105, round:"Huitièmes de finale", roundShort:"H5", team1:"🇵🇹 Portugal",         team2:"🇪🇸 Espagne",date:"06/07", time:"21:00" }, // N°93
   { id:1106, round:"Huitièmes de finale", roundShort:"H6", team1:"🇺🇸 États-Unis",    team2:"🇧🇪 Belgique",date:"07/07", time:"02:00" }, // N°94
-  { id:1107, round:"Huitièmes de finale", roundShort:"H7", team1:"🇦🇷 Argentine",     team2:"",date:"07/07", time:"18:00" }, // N°95
-  { id:1108, round:"Huitièmes de finale", roundShort:"H8", team1:"🇨🇭 Suisse",         team2:"",date:"07/07", time:"22:00" }, // N°96
+  { id:1107, round:"Huitièmes de finale", roundShort:"H7", team1:"🇦🇷 Argentine",        team2:"🇪🇬 Égypte",date:"07/07", time:"18:00" }, // N°95
+  { id:1108, round:"Huitièmes de finale", roundShort:"H8", team1:"🇨🇭 Suisse",           team2:"🇨🇴 Colombie",date:"07/07", time:"22:00" }, // N°96
   // ── Quarts de finale ──────────────────────────────────────────────────────
-  { id:1201, round:"Quarts", roundShort:"QF1", team1:"🏳️ Vainq. H2", team2:"🏳️ Vainq. H1", date:"09/07", time:"22:00" }, // N°97
+  { id:1201, round:"Quarts", roundShort:"QF1", team1:"🇫🇷 France",         team2:"🇲🇦 Maroc", date:"09/07", time:"22:00" }, // N°97
   { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" }, // N°98
   { id:1203, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H3", team2:"🏳️ Vainq. H4", date:"11/07", time:"23:00" }, // N°99
   { id:1204, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7", team2:"🏳️ Vainq. H8", date:"12/07", time:"03:00" }, // N°100
