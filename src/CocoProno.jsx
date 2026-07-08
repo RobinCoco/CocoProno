@@ -2200,7 +2200,7 @@ export default function CocoProno() {
             [2,"gold", "✔","Bon résultat seulement","ex: 0-1 → 1-4"],
             [0,"red",  "❌","Mauvais résultat",""],
           ].map(([pts,col,icon,label,ex])=>{
-            const meta = ptsMeta(pts, isKo);
+            const meta = ptsMeta(pts, false);
             return (
               <div key={pts} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                 <span style={{ fontSize:15 }}>{icon}</span>
