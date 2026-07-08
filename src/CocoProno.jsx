@@ -304,8 +304,8 @@ const KNOCKOUT_MATCHES = [
   { id:1108, round:"Huitièmes de finale", roundShort:"H8", team1:"🇨🇭 Suisse",           team2:"🇨🇴 Colombie",date:"07/07", time:"22:00" }, // N°96
   // ── Quarts de finale ──────────────────────────────────────────────────────
   { id:1201, round:"Quarts", roundShort:"QF1", team1:"🇫🇷 France",         team2:"🇲🇦 Maroc", date:"09/07", time:"22:00" }, // N°97
-  { id:1202, round:"Quarts", roundShort:"QF2", team1:"🏳️ Vainq. H5", team2:"🏳️ Vainq. H6", date:"10/07", time:"21:00" }, // N°98
-  { id:1203, round:"Quarts", roundShort:"QF3", team1:"🏳️ Vainq. H3", team2:"🏳️ Vainq. H4", date:"11/07", time:"23:00" }, // N°99
+  { id:1202, round:"Quarts", roundShort:"QF2", team1:"🇪🇸 Espagne",         team2:"🇧🇪 Belgique", date:"10/07", time:"21:00" }, // N°98
+  { id:1203, round:"Quarts", roundShort:"QF3", team1:"🇳🇴 Norvège",          team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"11/07", time:"23:00" }, // N°99
   { id:1204, round:"Quarts", roundShort:"QF4", team1:"🏳️ Vainq. H7", team2:"🏳️ Vainq. H8", date:"12/07", time:"03:00" }, // N°100
   // ── Demi-finales ──────────────────────────────────────────────────────────
   { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"14/07", time:"21:00" }, // N°101
@@ -388,13 +388,21 @@ function calcPtsKO(predScore, realScore, predWinner, realWinner) {
   return pts;
 }
 
-function ptsMeta(pts) {
-  if (pts === 5) return { icon:"🏆", label:"Score exact + qualifié", color:"green", hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
-  if (pts === 4) return { icon:"🎯", label:"Bon écart + qualifié",   color:"teal",  hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
-  if (pts === 3) return { icon:"⚡", label:"Bon résultat + qualifié",color:"blue",  hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
-  if (pts === 2) return { icon:"✔",  label:"Bon résultat",           color:"gold",  hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
-  if (pts === 1) return { icon:"➕", label:"+1pt",                    color:"gray",  hex:"#6b7280", bg:"rgba(107,114,128,0.10)",border:"rgba(107,114,128,0.3)"};
-  if (pts === 0) return { icon:"❌", label:"Raté",                    color:"red",   hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
+function ptsMeta(pts, isKo) {
+  if (isKo) {
+    if (pts === 5) return { icon:"🏆", label:"Score exact + qualifié",    hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
+    if (pts === 4) return { icon:"🎯", label:"Bon écart + qualifié",       hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
+    if (pts === 3) return { icon:"⚡", label:"Bon résultat + qualifié",    hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
+    if (pts === 2) return { icon:"✔",  label:"Qualifié ✓",                 hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
+    if (pts === 1) return { icon:"➕", label:"Résultat partiel",            hex:"#6b7280", bg:"rgba(107,114,128,0.10)",border:"rgba(107,114,128,0.3)"};
+    if (pts === 0) return { icon:"❌", label:"Raté",                        hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
+  }
+  if (pts === 5) return { icon:"🏆", label:"Score exact",       hex:"#15803d", bg:"rgba(21,128,61,0.12)",  border:"rgba(21,128,61,0.4)"  };
+  if (pts === 4) return { icon:"🎯", label:"Bon écart",          hex:"#0d9488", bg:"rgba(13,148,136,0.12)", border:"rgba(13,148,136,0.4)" };
+  if (pts === 3) return { icon:"⚡", label:"Buts partiels",      hex:"#1d4ed8", bg:"rgba(29,78,216,0.10)",  border:"rgba(29,78,216,0.35)" };
+  if (pts === 2) return { icon:"✔",  label:"Bon résultat",       hex:"#b45309", bg:"rgba(180,83,9,0.10)",   border:"rgba(180,83,9,0.35)"  };
+  if (pts === 1) return { icon:"➕", label:"+1pt",                hex:"#6b7280", bg:"rgba(107,114,128,0.10)",border:"rgba(107,114,128,0.3)"};
+  if (pts === 0) return { icon:"❌", label:"Raté",                hex:"#dc2626", bg:"rgba(220,38,38,0.10)",  border:"rgba(220,38,38,0.35)" };
   return null;
 }
 
@@ -1576,11 +1584,11 @@ export default function CocoProno() {
             const pred = myPred(m);
             const real = realScores[m.id];
             const pts  = myPts(m);
-            const meta = pts !== null ? ptsMeta(pts) : null;
+            const meta = pts !== null ? ptsMeta(pts, isKo) : null;
             // Prono IA : uniquement le vrai compte cocoprono-ia
             const aiPred = preds[`cocoprono-ia_${m.id}`] || null;
             const aiPts  = calcPts(aiPred, real);
-            const aiMeta = aiPts !== null ? ptsMeta(aiPts) : null;
+            const aiMeta = aiPts !== null ? ptsMeta(aiPts, isKo) : null;
             const local  = inlineInputs[m.id] ?? {};
             const v1 = local.s1 !== undefined ? local.s1 : (pred !== undefined ? String(pred.s1) : "");
             const v2 = local.s2 !== undefined ? local.s2 : (pred !== undefined ? String(pred.s2) : "");
@@ -1635,7 +1643,19 @@ export default function CocoProno() {
                   </div>
                   <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                     {!locked && previewMeta && <span style={{ ...pill(previewMeta), fontSize:11 }}>{previewMeta.icon} +{previewPts??pts}pt{(previewPts??pts)>1?"s":""}</span>}
-                    {locked && meta && <span style={{ ...pill(meta), fontSize:11 }}>{meta.icon} +{pts}pt{pts>1?"s":""}</span>}
+                    {locked && meta && (
+                      <span style={{ ...pill(meta), fontSize:11 }}>
+                        {meta.icon} +{pts}pt{pts>1?"s":""}
+                        {isKo && pts >= 2 && (() => {
+                          const realIsDraw = realScores[m.id] && realScores[m.id].s1 === realScores[m.id].s2;
+                          const pred = myPred(m);
+                          const qualOk = realIsDraw
+                            ? myWinner(m) && realScores[m.id + KO_WINNER_OFFSET]
+                            : pred && (pred.s1 > pred.s2 ? "team1" : pred.s2 > pred.s1 ? "team2" : null) !== null;
+                          return qualOk ? <span style={{opacity:0.75}}> (incl. +2✓)</span> : null;
+                        })()}
+                      </span>
+                    )}
                     {/* Indicateur de sauvegarde */}
                     {mss === "saving" && <span style={{ fontSize:10, color:"rgba(251,191,36,0.9)", fontWeight:700, display:"flex", alignItems:"center", gap:3 }}>⏳</span>}
                     {mss === "saved"  && <span style={{ fontSize:10, color:"#4ade80", fontWeight:700 }}>✓ sauvegardé</span>}
@@ -1809,7 +1829,7 @@ export default function CocoProno() {
             const t1s = resTeam("team1"); const t2s = resTeam("team2");
             const t1=splitTeam(t1s), t2=splitTeam(t2s);
             const real=realScores[m.id], pred=preds[me?`${me.id}_${m.id}`:null];
-            const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts):null;
+            const pts=calcPts(pred,real), meta=pts!==null?ptsMeta(pts, true):null;
             const locked=isMatchLocked(m);
             const known1 = Boolean(koTeams[m.id]?.team1 || !t1s.startsWith("🏳"));
             const known2 = Boolean(koTeams[m.id]?.team2 || !t2s.startsWith("🏳"));
@@ -2187,7 +2207,7 @@ export default function CocoProno() {
             [2,"gold", "✔","Bon résultat seulement","ex: 0-1 → 1-4"],
             [0,"red",  "❌","Mauvais résultat",""],
           ].map(([pts,col,icon,label,ex])=>{
-            const meta = ptsMeta(pts);
+            const meta = ptsMeta(pts, isKo);
             return (
               <div key={pts} style={{ display:"flex", alignItems:"center", gap:10, marginBottom:8 }}>
                 <span style={{ fontSize:15 }}>{icon}</span>
@@ -2630,7 +2650,7 @@ export default function CocoProno() {
                     const pts = isKo
                       ? calcPtsKO(pred, real, iaWinner, realWinner)
                       : calcPts(pred, real);
-                    const meta = pts !== null ? ptsMeta(pts) : null;
+                    const meta = pts !== null ? ptsMeta(pts, isKo) : null;
                     const inputSt = (hasPred) => ({ width:50, height:50, borderRadius:12, border:`2.5px solid ${hasPred?"#fbbf24":"rgba(251,191,36,0.25)"}`, background:"rgba(251,191,36,0.07)", textAlign:"center", fontSize:24, fontWeight:900, color:"#b45309", outline:"none", MozAppearance:"textfield" });
                     return (
                       <div key={m.id} style={{ ...card, padding:"12px 14px", marginBottom:8,
