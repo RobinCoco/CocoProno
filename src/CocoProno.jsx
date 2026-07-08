@@ -1646,14 +1646,7 @@ export default function CocoProno() {
                     {locked && meta && (
                       <span style={{ ...pill(meta), fontSize:11 }}>
                         {meta.icon} +{pts}pt{pts>1?"s":""}
-                        {isKo && pts >= 2 && (() => {
-                          const realIsDraw = realScores[m.id] && realScores[m.id].s1 === realScores[m.id].s2;
-                          const pred = myPred(m);
-                          const qualOk = realIsDraw
-                            ? myWinner(m) && realScores[m.id + KO_WINNER_OFFSET]
-                            : pred && (pred.s1 > pred.s2 ? "team1" : pred.s2 > pred.s1 ? "team2" : null) !== null;
-                          return qualOk ? <span style={{opacity:0.75}}> (incl. +2✓)</span> : null;
-                        })()}
+                        {isKo && pts >= 2 && <span style={{opacity:0.75}}> (+2✓)</span>}
                       </span>
                     )}
                     {/* Indicateur de sauvegarde */}
