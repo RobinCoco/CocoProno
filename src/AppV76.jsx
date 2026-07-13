@@ -308,8 +308,8 @@ const KNOCKOUT_MATCHES = [
   { id:1203, round:"Quarts", roundShort:"QF3", team1:"🇳🇴 Norvège",          team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"11/07", time:"23:00" }, // N°99
   { id:1204, round:"Quarts", roundShort:"QF4", team1:"🇦🇷 Argentine",         team2:"🇨🇭 Suisse", date:"12/07", time:"03:00" }, // N°100
   // ── Demi-finales ──────────────────────────────────────────────────────────
-  { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🏳️ Vainq. QF1", team2:"🏳️ Vainq. QF2", date:"14/07", time:"21:00" }, // N°101
-  { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏳️ Vainq. QF3", team2:"🏳️ Vainq. QF4", date:"15/07", time:"21:00" }, // N°102
+  { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🇫🇷 France",           team2:"🇪🇸 Espagne", date:"14/07", time:"21:00" }, // N°101
+  { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",       team2:"🇦🇷 Argentine", date:"15/07", time:"21:00" }, // N°102
   // ── Petite finale ─────────────────────────────────────────────────────────
   { id:1401, round:"Petite finale", roundShort:"3P",  team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"18/07", time:"23:00" }, // N°103
   // ── Finale ────────────────────────────────────────────────────────────────
