@@ -1979,12 +1979,13 @@ export default function CocoProno() {
               {!bracketView && (
                 <div style={{display:"flex",gap:6,marginBottom:16,overflowX:"auto",paddingBottom:4,WebkitOverflowScrolling:"touch"}}>
                   {[
-                    ["all",      "Tous"],
-                    ["Seizièmes de finale", "16es"],
-                    ["Huitièmes de finale", "8es"],
-                    ["Quarts",   "Quarts"],
-                    ["Demi-finales","Demies"],
-                    ["Finale",   "Finale"],
+                    ["all",               "Tous"],
+                    ["Seizièmes de finale","16es"],
+                    ["Huitièmes de finale","8es"],
+                    ["Quarts",            "Quarts"],
+                    ["Demi-finales",      "Demies"],
+                    ["Petite finale",     "🥉 3e place"],
+                    ["Finale",            "🏆 Finale"],
                   ].map(([val, label]) => {
                     const active = filterRound === val;
                     const rc = roundColors[val] || { color:"rgba(255,255,255,0.8)" };
