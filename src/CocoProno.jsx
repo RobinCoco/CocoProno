@@ -311,9 +311,9 @@ const KNOCKOUT_MATCHES = [
   { id:1301, round:"Demi-finales", roundShort:"SF1", team1:"🇫🇷 France",           team2:"🇪🇸 Espagne", date:"14/07", time:"21:00" }, // N°101
   { id:1302, round:"Demi-finales", roundShort:"SF2", team1:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre",       team2:"🇦🇷 Argentine", date:"15/07", time:"21:00" }, // N°102
   // ── Petite finale ─────────────────────────────────────────────────────────
-  { id:1401, round:"Petite finale", roundShort:"3P",  team1:"🏳️ Perdant SF1", team2:"🏳️ Perdant SF2", date:"18/07", time:"23:00" }, // N°103
+  { id:1401, round:"Petite finale", roundShort:"3P",  team1:"🇫🇷 France",           team2:"🏴󠁧󠁢󠁥󠁮󠁧󠁿 Angleterre", date:"18/07", time:"23:00" }, // N°103
   // ── Finale ────────────────────────────────────────────────────────────────
-  { id:1402, round:"Finale",        roundShort:"🏆",  team1:"🏳️ Vainq. SF1",  team2:"🏳️ Vainq. SF2",  date:"19/07", time:"21:00" }, // N°104
+  { id:1402, round:"Finale",        roundShort:"🏆",  team1:"🇪🇸 Espagne",          team2:"🇦🇷 Argentine",  date:"19/07", time:"21:00" }, // N°104
 ];
 
 const ALL_KO_MATCHES = KNOCKOUT_MATCHES;
